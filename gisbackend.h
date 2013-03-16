@@ -11,22 +11,22 @@
 class GisBackend {
 public:
   //returns the elevation value at the coordinates x y
-  double get_elevation(double x, double y) const;
+  virtual double get_elevation(double x, double y) const = 0;
 
   //returns the slope value at the coordinates x y
-  double get_slope(double x, double y) const;
+  virtual double get_slope(double x, double y) const = 0;
 
   //returns the aspect value at the coordinates x y
-  double get_aspect(double x, double y) const;
+  virtual double get_aspect(double x, double y) const = 0;
 
   //returns the distance between x y and the left slope edge
-  double distance_from_left(double x, double y) const;
+  virtual double distance_from_left(double x, double y) const = 0;
 
   //returns the distance between x y and the right slope edge
-  double distance_from_right(double x, double y) const;
+  virtual double distance_from_right(double x, double y) const = 0;
 
   //checks if the give point is inside the ski slope
-  bool is_inside_slope(double x, double y);
+  virtual bool is_inside_slope(double x, double y) const = 0;
 
   virtual ~GisBackend() { };
 private:

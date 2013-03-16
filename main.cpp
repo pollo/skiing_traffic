@@ -40,6 +40,31 @@ Option* decl_rast(const char* key,const char* description)
   return opt;
 }
 
+void test_gb(GrassBackend& gb)
+{
+  cout << "x y elevation slope aspect left right inside" << endl;
+  for (int i=0; i<500; i++)
+  {
+    double x,y,f,fmax,fmin;
+    f = (double)rand() / RAND_MAX;
+    fmin = 695512.73;
+    fmax = 696567.64;
+    x = fmin + f * (fmax - fmin);
+    f = (double)rand() / RAND_MAX;
+    fmin = 5134497.66;
+    fmax = 5135308.53;
+    y = fmin + f * (fmax - fmin);
+    cout.precision(10);
+    cout << x << " " << y << " ";
+    cout << gb.get_elevation(x,y) << " ";
+    cout <<  gb.get_slope(x,y) << " ";
+    cout  <<  gb.get_aspect(x,y) << " ";
+    cout << gb.distance_from_left(x,y);
+    cout << " " <<  gb.distance_from_right(x,y) << " ";
+    cout <<  gb.is_inside_slope(x,y) << " ";
+    cout << endl;
+  }
+}
 
 int main (int argc, char** argv)
 {
@@ -79,27 +104,21 @@ int main (int argc, char** argv)
                   slope_opt->answer,
                   aspect_opt->answer);
 
-  cout << "x y elevation slope aspect left right inside" << endl;
-  for (int i=0; i<500; i++)
+  test_gb(gb);
+
+  /*GrassBackend *pgb;
+  for (int i=0; i<112; i++)
   {
-    double x,y,f,fmax,fmin;
-    f = (double)rand() / RAND_MAX;
-    fmin = 695512.73;
-    fmax = 696567.64;
-    x = fmin + f * (fmax - fmin);
-    f = (double)rand() / RAND_MAX;
-    fmin = 5134497.66;
-    fmax = 5135308.53;
-    y = fmin + f * (fmax - fmin);
-    cout.precision(10);
-    cout << x << " " << y << " ";
-    cout << gb.get_elevation(x,y) << " ";
-    cout <<  gb.get_slope(x,y) << " ";
-    cout  <<  gb.get_aspect(x,y) << " ";
-    cout << gb.distance_from_left(x,y);
-    cout << " " <<  gb.distance_from_right(x,y) << " ";
-    cout <<  gb.is_inside_slope(x,y) << " ";
-    cout << endl;
-  }
+    cout << i << endl;
+    pgb = new GrassBackend(ski_slope_opt->answer,
+                  right_edge_opt->answer,
+                  left_edge_opt->answer,
+                  dtm_opt->answer,
+                  slope_opt->answer,
+                  aspect_opt->answer);
+    delete pgb;
+    for (int j=0; j<10000; j+=2)
+      j-=1;
+      }*/
   return 0;
 }

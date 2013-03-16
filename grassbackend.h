@@ -50,7 +50,7 @@ public:
   double distance_from_right(double x, double y) const;
 
   //checks if the give point is inside the ski slope
-  bool is_inside_slope(double x, double y);
+  bool is_inside_slope(double x, double y) const;
 
  private:
   Map_info ski_slope;

@@ -109,6 +109,7 @@ bool GrassBackend::open_raster(int *map,
 double query_raster(int map, RASTER_MAP_TYPE type, double x, double y)
 {
   int row, col;
+  double res;
   Cell_head window;
 
   G_get_window(&window);
@@ -117,21 +118,24 @@ double query_raster(int map, RASTER_MAP_TYPE type, double x, double y)
 
   if (type == CELL_TYPE)
   {
-    static CELL *cell = G_allocate_c_raster_buf();
-
+    //TODO: avoid memory allocation each time
+    CELL *cell = G_allocate_c_raster_buf();
     if (G_get_c_raster_row(map, cell, row) < 0)
       throw runtime_error("Unable to read raster map rows");
-    return cell[col];
+    res = cell[col];
+    G_free(cell);
   }
   else
   {
-    static DCELL *cell = G_allocate_d_raster_buf();
+    //TODO: avoid memory allocation each time
+    DCELL *cell = G_allocate_d_raster_buf();
 
     if (G_get_d_raster_row(map, cell, row) < 0)
       throw runtime_error("Unable to read raster map at rows");
-
-    return cell[col];
+    res = cell[col];
+    G_free(cell);
   }
+  return res;
 }
 
 double GrassBackend::get_elevation(double x, double y) const
@@ -149,9 +153,13 @@ double GrassBackend::get_aspect(double x, double y) const
   return query_raster(aspect,aspect_type,x,y);
 }
 
-bool GrassBackend::is_inside_slope(double x, double y)
+bool GrassBackend::is_inside_slope(double x, double y) const
 {
-  return (Vect_point_in_area_outer_ring(x,y,&ski_slope,1) == 1);
+  Map_info temp;
+  //GRASS 6 does not declare the map parameter const
+  //this trick is to mantain this method const
+  temp = ski_slope;
+  return (Vect_point_in_area_outer_ring(x,y,&temp,1) == 1);
 }
 
 //Assumes that there is unique feature in the map: the line rappresenting
