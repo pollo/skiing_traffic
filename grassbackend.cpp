@@ -10,6 +10,7 @@
 #include "grassbackend.h"
 #include <stdexcept>
 #include <iostream>
+#include <limits>
 
 using namespace std;
 
@@ -34,6 +35,7 @@ line_pnts* read_vector_line(Map_info& map)
 GrassBackend::GrassBackend (string ski_slope_name,
                             string right_edge_name,
                             string left_edge_name,
+                            string start_area_name,
                             string elevation_name,
                             string slope_name,
                             string aspect_name)
@@ -45,6 +47,13 @@ GrassBackend::GrassBackend (string ski_slope_name,
   //check ski slope map
   if (Vect_get_num_areas(&ski_slope) != 1)
     throw domain_error("Ski slope map "+elevation_name+\
+                       " must have a single feature of type AREA");
+  //open start area map
+  if (!open_vector(&start_area,start_area_name))
+    throw domain_error("Start area map "+start_area_name+" not found");
+  //check ski slope map
+  if (Vect_get_num_areas(&start_area) != 1)
+    throw domain_error("Start area map "+start_area_name+\
                        " must have a single feature of type AREA");
   //open right edge
   if (!open_vector(&right_edge,right_edge_name))
@@ -121,7 +130,7 @@ double query_raster(int map, RASTER_MAP_TYPE type, double x, double y)
     //TODO: avoid memory allocation each time
     CELL *cell = G_allocate_c_raster_buf();
     if (G_get_c_raster_row(map, cell, row) < 0)
-      throw runtime_error("Unable to read raster map rows");
+      return numeric_limits<double>::quiet_NaN();
     res = cell[col];
     G_free(cell);
   }
@@ -131,7 +140,7 @@ double query_raster(int map, RASTER_MAP_TYPE type, double x, double y)
     DCELL *cell = G_allocate_d_raster_buf();
 
     if (G_get_d_raster_row(map, cell, row) < 0)
-      throw runtime_error("Unable to read raster map at rows");
+      return numeric_limits<double>::quiet_NaN();
     res = cell[col];
     G_free(cell);
   }
@@ -203,6 +212,21 @@ double GrassBackend::distance_from_right(double x, double y) const
   return dist;
 }
 
+//returns the cell center coordinates for the cell where the point x y is
+//coordinates are stored in cx and cy
+void GrassBackend::get_cell_center(double x, double y,
+                       double *cx, double *cy) const
+{
+  Cell_head window;
+  double row, col;
+
+  G_get_window(&window);
+  col = (int) G_easting_to_col(x, &window);
+  row = (int) G_northing_to_row(y, &window);
+  *cx = G_col_to_easting(col+0.5, &window);
+  *cy = G_row_to_northing(row+0.5, &window);
+}
+
 GrassBackend::~GrassBackend () {
   Vect_close(&ski_slope);
   Vect_close(&right_edge);
@@ -211,7 +235,7 @@ GrassBackend::~GrassBackend () {
     Vect_destroy_line_struct(line_right);
   if(line_left)
     Vect_destroy_line_struct(line_left);
-  close(elevation);
-  close(slope);
-  close(aspect);
+  G_close_cell(elevation);
+  G_close_cell(slope);
+  G_close_cell(aspect);
 }

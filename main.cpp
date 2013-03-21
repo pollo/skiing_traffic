@@ -13,8 +13,10 @@ extern "C" {
 }
 #endif
 #include <cstdlib>
+#include <stdexcept>
 #include <iostream>
 #include "grassbackend.h"
+#include "slope.h"
 
 using namespace std;
 
@@ -40,36 +42,75 @@ Option* decl_rast(const char* key,const char* description)
   return opt;
 }
 
-void test_gb(GrassBackend& gb)
+void test_gb(Slope& sl)
 {
-  cout << "x y elevation slope aspect left right inside" << endl;
+  cout << "x y elevation slope aspect left right inside center" << endl;
   for (int i=0; i<500; i++)
   {
-    double x,y,f,fmax,fmin;
+    double f,fmax,fmin;
+    Point p;
+    Point c;
     f = (double)rand() / RAND_MAX;
     fmin = 695512.73;
     fmax = 696567.64;
-    x = fmin + f * (fmax - fmin);
+    p.x = fmin + f * (fmax - fmin);
     f = (double)rand() / RAND_MAX;
     fmin = 5134497.66;
     fmax = 5135308.53;
-    y = fmin + f * (fmax - fmin);
+    p.y = fmin + f * (fmax - fmin);
     cout.precision(10);
-    cout << x << " " << y << " ";
-    cout << gb.get_elevation(x,y) << " ";
-    cout <<  gb.get_slope(x,y) << " ";
-    cout  <<  gb.get_aspect(x,y) << " ";
-    cout << gb.distance_from_left(x,y);
-    cout << " " <<  gb.distance_from_right(x,y) << " ";
-    cout <<  gb.is_inside_slope(x,y) << " ";
+    cout << p.x << " " << p.y << " ";
+    cout << sl.get_elevation(p) << " ";
+    cout <<  sl.get_slope(p) << " ";
+    cout  <<  sl.get_aspect(p) << " ";
+    cout << sl.distance_from_left(p);
+    cout << " " <<  sl.distance_from_right(p) << " ";
+    cout <<  sl.is_inside_slope(p) << " ";
+//    sl.get_cell_center(p,&p);
+//    cout << "(" << p.x << "," << p.y << "," << p.z << ") ";
     cout << endl;
+  }
+}
+
+void test_elevation(Slope& sl)
+{
+  cout << "id x y elevation" << endl;
+  for (int i=0; i<10000; i++)
+  {
+    double f,fmax,fmin;
+    Point p;
+    Point c;
+    f = (double)rand() / RAND_MAX;
+    fmin = 695562.73;
+    fmax = 695567.64;
+    //vero
+    //fmin = 695512.73;
+    //fmax = 696567.64;
+    //finto
+    //fmin = 678550.020811;
+    //fmax = 678559.989453;
+    p.x = fmin + f * (fmax - fmin);
+    f = (double)rand() / RAND_MAX;
+    //vero
+    fmin = 5135100.66;
+    fmax = 5135105.53;
+    //fmin = 5134497.66;
+    //fmax = 5135308.53;
+    //finto
+    //fmin = 5101689.983547;
+    //fmax = 5101700.014884;
+    p.y = fmin + f * (fmax - fmin);
+    cout.precision(10);
+    cerr << "i " <<i << endl;
+    cout << i << " " << p.x << " " << p.y << " ";
+    cout << sl.get_elevation(p) << " " << endl;
   }
 }
 
 int main (int argc, char** argv)
 {
   GModule *module;
-  Option *ski_slope_opt, *right_edge_opt, *left_edge_opt;
+  Option *ski_slope_opt, *right_edge_opt, *left_edge_opt, *start_area_opt;
   Option *dtm_opt, *slope_opt, *aspect_opt;
 
   G_gisinit(argv[0]);
@@ -88,6 +129,9 @@ int main (int argc, char** argv)
   left_edge_opt = decl_vect(
     "left_edge",
     "Name of input vector map of the ski slope left edge");
+  start_area_opt = decl_vect(
+    "start_area",
+    "Name of input vector map of the area where the skiers start");
 
   //raster map options declaration
   dtm_opt = decl_rast("elevation", "Name of elevation raster map");
@@ -97,15 +141,23 @@ int main (int argc, char** argv)
   if (G_parser(argc, argv))
     exit(1);
 
-  GrassBackend gb(ski_slope_opt->answer,
-                  right_edge_opt->answer,
-                  left_edge_opt->answer,
-                  dtm_opt->answer,
-                  slope_opt->answer,
-                  aspect_opt->answer);
-
-  test_gb(gb);
-
+  GrassBackend *gb;
+  try {
+    gb = new GrassBackend(ski_slope_opt->answer,
+                          right_edge_opt->answer,
+                          left_edge_opt->answer,
+                          start_area_opt->answer,
+                          dtm_opt->answer,
+                          slope_opt->answer,
+                          aspect_opt->answer);
+  }
+  catch (domain_error e) {
+    cout << "ERROR: " << e.what()  << endl;
+    exit(EXIT_FAILURE);
+  }
+  Slope sl(*gb);
+  //test_gb(sl);
+  //test_elevation(sl);
   /*GrassBackend *pgb;
   for (int i=0; i<112; i++)
   {

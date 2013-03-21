@@ -1,5 +1,5 @@
 /*
- * File:   GisBackend.h
+ * File:   gisbackend.h
  *
  * Declares an Interface for the Gis Backend needed by the model.
  *
@@ -25,8 +25,15 @@ public:
   //returns the distance between x y and the right slope edge
   virtual double distance_from_right(double x, double y) const = 0;
 
+  //returns the cell center coordinates
+  virtual void get_cell_center(double x, double y,
+                               double *cx, double *cy) const = 0;
+
   //checks if the give point is inside the ski slope
   virtual bool is_inside_slope(double x, double y) const = 0;
+
+  //return the coordinate of a random point inside the start area
+  virtual void get_start_point(double *x, double *y) const = 0;
 
   virtual ~GisBackend() { };
 private:

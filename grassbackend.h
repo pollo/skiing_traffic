@@ -29,6 +29,7 @@ public:
   GrassBackend(std::string ski_slope_name,
                std::string right_edge,
                std::string left_edge,
+               std::string start_area_name,
                std::string elevation_name,
                std::string slope_name,
                std::string aspect_name);
@@ -52,10 +53,18 @@ public:
   //checks if the give point is inside the ski slope
   bool is_inside_slope(double x, double y) const;
 
+  //returns the cell center coordinates
+  void get_cell_center(double x, double y,
+                       double *cx, double *cy) const;
+
+  //return the coordinate of a random point inside the start area
+  void get_start_point(double *x, double *y) const;
+
  private:
   Map_info ski_slope;
   Map_info right_edge;
   Map_info left_edge;
+  Map_info start_area;
   //file descriptors
   int elevation;
   RASTER_MAP_TYPE elevation_type;
