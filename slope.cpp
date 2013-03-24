@@ -8,6 +8,7 @@
 using namespace std;
 
 #include "slope.h"
+#include "parameters.h"
 #include <stdexcept>
 #include <cmath>
 #include <iostream>
@@ -15,8 +16,12 @@ using namespace std;
 
 #define EPS 0.001
 
-Slope::Slope(const GisBackend& gb) : gb(gb)
+Slope::Slope(const GisBackend& gb,
+             std::ofstream &output_file) : gb(gb), output_file(output_file)
 {
+  time_since_last_skier = 0;
+  next_skier_id = 1;
+  output_file << "id x y z " << endl;
 }
 
 //returns the elevation in the point p. The computation is based on the slope of
@@ -38,7 +43,7 @@ double Slope::get_elevation(const Point& p) const
   if (isnan(slope_center_point))
     delev = 0;
   else
-    delev = dist * tan(slope_center_point);
+    delev = dist * tan(slope_center_point * settings::degree_to_radians);
 
   return center.z + delev;
 }
@@ -50,11 +55,10 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
   double x, y;
   double slope, aspect;
   double angle_line_points, angle_horizontal_linepoints;
-  double degree_to_radians = M_PI/180.0;
   //the slope and the aspect are considered the same from p1 to p2
   //values of p1 are taken
-  aspect = get_aspect(p1) * degree_to_radians;
-  slope = get_slope(p1) * degree_to_radians;
+  aspect = get_aspect(p1) * settings::degree_to_radians;
+  slope = get_slope(p1) * settings::degree_to_radians;
 
   if (isnan(aspect) || isnan(slope))
     return numeric_limits<double>::quiet_NaN();
@@ -75,7 +79,51 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
   angle_horizontal_linepoints =  angle_line_points - aspect + M_PI / 2.0;;
 
   //compute the slope from p1 to p2
-  return asin( sin(slope) * sin(angle_horizontal_linepoints));
+  return asin( sin(slope) * sin(angle_horizontal_linepoints))/settings::degree_to_radians;
+}
+
+void Slope::start_skiers(double dtime)
+{
+  double time_between_skiers = 3600 / settings::persons_hour;
+  while (time_since_last_skier >= time_between_skiers)
+  {
+    Point p;
+    gb.get_start_point(&p.x,&p.y);
+    Skier *s = new Skier(next_skier_id,*this,p);
+    next_skier_id++;
+    skiers.insert(s);
+    time_since_last_skier -= time_between_skiers;
+  }
+  time_since_last_skier += dtime;
+}
+
+void Slope::update_skiers(double dtime)
+{
+  for (set<Skier*>::iterator skier = skiers.begin();
+       skier != skiers.end(); ++skier)
+  {
+    (*skier)->update(dtime);
+  }
+}
+
+void Slope::log_skiers_situation() const
+{
+  for (set<Skier*>::iterator skier = skiers.begin();
+       skier != skiers.end(); ++skier)
+  {
+    const Point &p = (*skier)->get_position();
+    output_file.precision(13);
+    output_file << (*skier)->get_id() <<" "<< p.x <<" "<< p.y <<" ";
+    output_file.precision(6);
+    output_file << p.z <<endl;
+  }
+}
+
+void Slope::update(double dtime)
+{
+  start_skiers(dtime);
+  update_skiers(dtime);
+  log_skiers_situation();
 }
 
 double Slope::get_slope(const Point& p) const
@@ -120,7 +168,7 @@ const set<SocialForce*>& Slope::get_social_forces() const
   return social_forces;
 }
 
-const set<Skier>& Slope::get_skiers() const
+const set<Skier*>& Slope::get_skiers() const
 {
   return skiers;
 }

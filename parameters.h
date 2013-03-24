@@ -12,6 +12,8 @@
 struct settings {
   static const double g;
   static const double average_mass;
+  static const int persons_hour;
+  static const double degree_to_radians;
 };
 
 #endif /* PARAMETERS_H */

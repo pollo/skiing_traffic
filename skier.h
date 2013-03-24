@@ -14,15 +14,21 @@ class Slope;
 
 class Skier {
 public:
-  Skier(const Slope& slope,
+  Skier(int id,
+        const Slope& slope,
         const Vector& position,
         const Vector& direction,
         const Vector& velocity,
         const Vector& acceleration);
   //gives default values to direction (alogn the fall line)
   //velocity (0) and acceleration (0)
-  Skier(const Slope& slope,
+  Skier(int id,
+        const Slope& slope,
         const Vector& position);
+
+  Vector get_position() const { return position; }
+  int get_id() const { return id; }
+
   double get_current_elevation() const;
   double get_current_slope() const;
   double get_current_aspect() const;
@@ -32,12 +38,13 @@ public:
   void update(double dtime);
 
 private:
+  int id;
   const Slope& slope;
-  double mass;
   Vector position;
   Vector direction;
   Vector velocity;
   Vector acceleration;
+  double mass;
 
   //updates the position of the skier using the Vector velocity
   //moves for dtime seconds

@@ -15,6 +15,7 @@ extern "C" {
 #include <cstdlib>
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
 #include "grassbackend.h"
 #include "slope.h"
 
@@ -107,6 +108,28 @@ void test_elevation(Slope& sl)
   }
 }
 
+void test_start_points(const GisBackend& gb)
+{
+  double x,y;
+  cout << "x y " << endl;
+  for (int i=0; i<100; i++)
+  {
+    gb.get_start_point(&x,&y);
+    cout.precision(10);
+    cout << x << " " << y << " " << endl;
+  }
+}
+
+void run_simulation(Slope& sl)
+{
+  double dtime = 10;
+  double total_time = 60*60 *4;
+  for (int t=0; t<total_time; t+=dtime)
+  {
+    sl.update(dtime);
+  }
+}
+
 int main (int argc, char** argv)
 {
   GModule *module;
@@ -155,7 +178,12 @@ int main (int argc, char** argv)
     cout << "ERROR: " << e.what()  << endl;
     exit(EXIT_FAILURE);
   }
-  Slope sl(*gb);
+
+  ofstream output;
+  output.open("/tmp/simulation.csv");
+  Slope sl(*gb, output);
+  run_simulation(sl);
+  //test_start_points(*gb);
   //test_gb(sl);
   //test_elevation(sl);
   /*GrassBackend *pgb;
@@ -172,5 +200,6 @@ int main (int argc, char** argv)
     for (int j=0; j<10000; j+=2)
       j-=1;
       }*/
+  output.close();
   return 0;
 }

@@ -6,8 +6,8 @@ DEBUG=-g
 
 all: skiing_traffic
 
-skiing_traffic: main.o grassbackend.o slope.o downhill_force.o
-	$(CC) $(LIBS) $(INC) $(DEBUG) main.o slope.o grassbackend.o -o skiing_traffic
+skiing_traffic: main.o grassbackend.o slope.o downhill_force.o parameters.o skier.o
+	$(CC) $(LIBS) $(INC) $(DEBUG) main.o slope.o grassbackend.o parameters.o skier.o -o skiing_traffic
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) main.cpp
@@ -18,10 +18,13 @@ grassbackend.o: grassbackend.cpp grassbackend.h gisbackend.h
 slope.o: slope.cpp slope.h skier.h socialforce.h physicalforce.h vector.h gisbackend.h
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) slope.cpp
 
+skier.o: skier.cpp skier.h parameters.h slope.h
+	$(CC) $(CFLAGS) $(INC) $(DEBUG) skier.cpp
+
 parameters.o: parameters.cpp parameters.h
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) parameters.cpp
 
-downhill_force.o: downhill_force.cpp downhill_force.h parameters.o
+downhill_force.o: downhill_force.cpp downhill_force.h parameters.h
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) downhill_force.cpp
 
 clean:

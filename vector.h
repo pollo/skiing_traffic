@@ -52,6 +52,12 @@ inline Vector operator*(Vector v, double a)
   return v;
 }
 
+inline Vector operator/(Vector v, double a)
+{
+  v /= a;
+  return v;
+}
+
 typedef Vector Point;
 
 #endif /* VECTOR_H */

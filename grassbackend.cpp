@@ -227,6 +227,28 @@ void GrassBackend::get_cell_center(double x, double y,
   *cy = G_row_to_northing(row+0.5, &window);
 }
 
+double frand(double min, double max)
+{
+    double f = (double)rand() / RAND_MAX;
+    return min + f * (max - min);
+}
+
+//return the coordinate of a random point inside the start area
+void GrassBackend::get_start_point(double *x, double *y) const
+{
+  BOUND_BOX box;
+  Map_info temp;
+
+  //GRASS 6 does not declare the map parameter const
+  //this trick is to mantain this method const
+  temp = start_area;
+  Vect_get_area_box(&temp, 1, &box);
+  do {
+    *x = frand(box.W,box.E);
+    *y = frand(box.S,box.N);
+  } while (!Vect_point_in_area_outer_ring(*x,*y,&temp,1));
+}
+
 GrassBackend::~GrassBackend () {
   Vect_close(&ski_slope);
   Vect_close(&right_edge);
