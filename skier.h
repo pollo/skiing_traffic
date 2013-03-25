@@ -48,7 +48,7 @@ private:
 
   //updates the position of the skier using the Vector velocity
   //moves for dtime seconds
-  void update_position(double dtime);
+  bool update_position(double dtime, double* time_to_reach_border);
   void update_velocity(double dtime);
   void update_direction();
   void update_acceleration();

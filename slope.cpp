@@ -158,6 +158,24 @@ void Slope::get_cell_center(const Point& p,
   c->z = gb.get_elevation(p.x,p.y);
 }
 
+void Slope::get_cell_bound(const Point& p,
+                           double *east, double *west,
+                           double *north, double *sud) const
+{
+  gb.get_cell_bound(p.x,p.y,east,west,north,sud);
+}
+
+bool Slope::reflect_line(const Point& start,
+                         const Poitn& end,
+                         Point* intersection,
+                         double* angle) const
+{
+  return gb.reflect_line(start.x, start.y,
+                         end.x, end.y,
+                         &(intersection->x), &(intersection->y),
+                         angle);
+}
+
 const set<PhysicalForce*>& Slope::get_physical_forces() const
 {
   return physical_forces;

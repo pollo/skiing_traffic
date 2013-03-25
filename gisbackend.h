@@ -29,11 +29,20 @@ public:
   virtual void get_cell_center(double x, double y,
                                double *cx, double *cy) const = 0;
 
+  virtual void get_cell_bound(double x, double y,
+                              double *east, double *west,
+                              double *north, double *sud) const = 0;
+
   //checks if the give point is inside the ski slope
   virtual bool is_inside_slope(double x, double y) const = 0;
 
-  //return the coordinate of a random point inside the start area
+  //returns the coordinate of a random point inside the start area
   virtual void get_start_point(double *x, double *y) const = 0;
+
+  //Returns the intersection point of the line (sx,sy)(dx,dy) with the slope
+  //edge and the angle that it forms with the perpendicular to the edge
+  virtual bool reflect_line(double sx, double sy, double dx, double dy,
+                            double *px, double *py, double *angle) const = 0;
 
   virtual ~GisBackend() { };
 private:

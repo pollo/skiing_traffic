@@ -15,8 +15,10 @@ using namespace std;
 #include <cmath>
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #define EPS 0.00000000001
+#define K 0.00001
 
 Skier::Skier(int id,
              const Slope& slope,
@@ -68,31 +70,93 @@ double Skier::get_current_inclination_angle() const
 }
 
 //Updates the position and the parameters of the skier for a time of dtime
-//First, the 
+//The acceleration that acted during this dtime is compute (start position
+//is considered).
+//The position of the skier is update moving the skier according to the
+//velocity computed in the previous step.
+//The new velocity is computed according to the old velocity and the effect
+//of the acceleration. Finally the new direction is derived by the velocity.
 void Skier::update(double dtime)
 {
+  bool cell_border_reached = false;
+  double time_to_reach_border;
+  //computes acceleration before moving
   update_acceleration();
-  update_position(dtime);
-  update_velocity(dtime);
+  //moves skier for dtime or until the cell border is reached
+  cell_border_reached = update_position(dtime, &time_to_reach_border);
+  //if the cell border is reached update velocity only for the time used
+  if (cell_border_reached)
+    update_velocity(time_to_reach_border);
   update_direction();
+  if (cell_border_reached)
+    update(dtime-time_to_reach_border);
 }
 
-void Skier::update_position(double dtime)
+//Moves the skier for dtime according to the velocity.
+//Returns wheter the skier reached the border of the cell or not
+//If the border is reached the time used is stored in time_to_reach_border
+//If the slope edge is reached the skier is "reflected"
+bool Skier::update_position(double dtime, double* time_to_reach_border)
 {
-  
-
+  bool border_reached;
+  Point d;
+  double east, west, north, sud;
+  slope.get_cell_bound(position,&east,&west,&north,&sud);
+  d = position + velocity * dtime;
+  //if new position is inside the cell
+  if ((d.x>=west && d.x<east) && (d.y>=sud && d.y<north))
+  {
+    border_reached = false;
+  }
+  else
+  {
+    double xtime, ytime, time;
+    //time to reach x border
+    if (velocity.x > 0)
+      xtime = (east - position.x) / velocity.x;
+    else
+      xtime = (west - position.x) / velocity.x;
+    //time to reach y border
+    if (velocity.y > 0)
+      ytime = (north - position.y) / velocity.y;
+    else
+      ytime = (sud - position.y) / velocity.y;
+    time = min(xtime,ytime);
+    cout << "x " << position.x << endl;
+    cout << "y " << position.y << endl;
+    d = position + velocity * time;
+    cout << "x " << d.x << endl;
+    cout << "y " << d.y << endl;
+    cout << "position " << d.z << endl;
+    cout << get_current_elevation();
+    assert(abs(d.z - get_current_elevation()) < EPS);
+    //adding K needed to cross the cell
+    d.x += K;
+    d.y += K;
+    *time_to_reach_border = time;
+    border_reached = true;
+  }
+  if (!slope.is_inside_slope(d))
+  {
+    Point intersection;
+    Point difference;
+    double angle;
+    slope.reflect_line(position,d,&intersection,&angle);
+    angle = angle * settings::degree_to_radians;
+    //vector from position to intersection
+    difference = position - intersection;
+    //vector from intersection to destination
+    difference.rotate(angle);
+    position = intersection + difference;
+    position.z = get_current_elevation();
+    assert(slope.is_inside_slope(position));
+  }
+  else
+    position = d;
+  return border_reached;
 }
 
-void Skier::update_velocity(double dtime)
-{
-  velocity = acceleration
-}
 
-void Skier::update_direction()
-{
-
-
-}
 
 void Skier::update_acceleration()
 {
@@ -104,6 +168,16 @@ void Skier::update_acceleration()
     force += (*iter)->apply(*this);
   }
   acceleration = force / mass;
+}
+
+void Skier::update_velocity(double dtime)
+{
+  velocity = velocity + acceleration * dtime;
+}
+
+void Skier::update_direction()
+{
+  direction = velocity / velocity.norm();
 }
 
 double Skier::get_current_elevation() const

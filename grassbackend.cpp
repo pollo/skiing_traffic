@@ -11,6 +11,11 @@
 #include <stdexcept>
 #include <iostream>
 #include <limits>
+#include <cmath>
+#include <cassert>
+
+#define EPS 0.001
+
 
 using namespace std;
 
@@ -227,6 +232,21 @@ void GrassBackend::get_cell_center(double x, double y,
   *cy = G_row_to_northing(row+0.5, &window);
 }
 
+void GrassBackend::get_cell_bound(double x, double y,
+                                  double *east, double *west,
+                                  double *north, double *sud) const
+{
+  Cell_head window;
+  double row, col;
+  G_get_window(&window);
+  col = (int) G_easting_to_col(x, &window);
+  row = (int) G_northing_to_row(y, &window);
+  *east = G_col_to_easting(col+1.0, &window);
+  *west = G_col_to_easting(col, &window);
+  *north = G_row_to_northing(row+1.0, &window);
+  *sud = G_row_to_northing(row, &window);
+}
+
 double frand(double min, double max)
 {
     double f = (double)rand() / RAND_MAX;
@@ -247,6 +267,81 @@ void GrassBackend::get_start_point(double *x, double *y) const
     *x = frand(box.W,box.E);
     *y = frand(box.S,box.N);
   } while (!Vect_point_in_area_outer_ring(*x,*y,&temp,1));
+}
+
+
+//Calculates the result of reflecting a line when it intersects another line
+//The inputs are the two endpoints of the line that should be reflectd (sx,sy)
+//(dx,dy)
+//The outputs are the coordinates of the intersection point and the angle that
+//the line forms with the perpendicular to the line in (px,py)
+bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
+                                double *px, double *py, double *angle) const
+{
+  bool found = true;
+  double dist_on_line;
+  double dist_to_line;
+  //point on line coordinates
+  double plx, ply;
+  line_pnts* intersection = Vect_new_line_struct();
+  line_pnts* line = Vect_new_line_struct();
+  Vect_append_point(line, sx, sy, 0);
+  Vect_append_point(line, dx, dy, 0);
+  if (Vect_line_get_intersections(line,line_right,intersection,0) > 0)
+  {
+    //if integration time and slope edge are reasonable there should be only one
+    //intersection point
+    Vect_line_distance(line_right,
+                       sx,
+                       sy,
+                       0,      //z
+                       0,      //with_z FALSE
+                       &plx,   //point_on_line x
+                       &ply,   //point_on_line y
+                       NULL,   //point_on_line z
+                       &dist_to_line,  //distance
+                       NULL,   //distance from segment
+                       NULL);  //distance from line along line
+  }
+  else
+  {
+    Vect_reset_line(intersection);
+    if (Vect_line_get_intersections(line,line_left,intersection,0) > 0)
+    {
+      Vect_line_distance(line_left,
+                         sx,
+                         sy,
+                         0,      //z
+                         0,      //with_z FALSE
+                         &plx,   //point_on_line x
+                         &ply,   //point_on_line y
+                         NULL,   //point_on_line z
+                         &dist_to_line,  //distance
+                         NULL,   //distance from segment
+                         NULL);  //distance from line along line
+    }
+    else
+    {
+      found = false;
+    }
+  }
+  if (found)
+  {
+    double degree_to_radians =  M_PI/180.0;
+    int n = 1;
+    //if integration time and slope edge are reasonable there should be 
+    //only one intersection point
+    assert(intersection->n_points == 1);
+    Vect_copy_pnts_to_xyz(intersection,px,py,NULL,&n);
+    dist_on_line = Vect_points_distance(*px,*py,0,plx,ply,0,0);
+    if (dist_to_line < EPS)
+      *angle = 90.0;
+    else
+      *angle = atan(dist_on_line/dist_to_line) / degree_to_radians;
+  }
+  Vect_destroy_line_struct(intersection);
+  Vect_destroy_line_struct(line);
+  return found;
 }
 
 GrassBackend::~GrassBackend () {

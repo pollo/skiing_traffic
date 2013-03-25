@@ -57,8 +57,16 @@ public:
   void get_cell_center(double x, double y,
                        double *cx, double *cy) const;
 
-  //return the coordinate of a random point inside the start area
+  //returns the coordinate of a random point inside the start area
   void get_start_point(double *x, double *y) const;
+
+  //returns the bound of the cell for the specified point
+  void get_cell_bound(double x, double y,
+                      double *east, double *west,
+                      double *north, double *sud) const;
+
+  bool reflect_line(double sx, double sy, double dx, double dy,
+                    double *px, double *py, double *angle) const;
 
  private:
   Map_info ski_slope;
