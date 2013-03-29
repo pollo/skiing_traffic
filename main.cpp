@@ -52,12 +52,12 @@ void test_gb(Slope& sl)
     Point p;
     Point c;
     f = (double)rand() / RAND_MAX;
-    fmin = 695512.73;
-    fmax = 696567.64;
+    fmin = 695548.00;
+    fmax = 696552.00;
     p.x = fmin + f * (fmax - fmin);
     f = (double)rand() / RAND_MAX;
-    fmin = 5134497.66;
-    fmax = 5135308.53;
+    fmin = 5135266.00;
+    fmax = 5135270.00;
     p.y = fmin + f * (fmax - fmin);
     cout.precision(10);
     cout << p.x << " " << p.y << " ";
@@ -82,27 +82,27 @@ void test_elevation(Slope& sl)
     Point p;
     Point c;
     f = (double)rand() / RAND_MAX;
-    fmin = 695562.73;
-    fmax = 695567.64;
+    //fmin = 695549.00;
+    //fmax = 695551.00;
     //vero
-    //fmin = 695512.73;
-    //fmax = 696567.64;
+    fmin = 695512.73;
+    fmax = 696567.64;
     //finto
     //fmin = 678550.020811;
     //fmax = 678559.989453;
     p.x = fmin + f * (fmax - fmin);
     f = (double)rand() / RAND_MAX;
     //vero
-    fmin = 5135100.66;
-    fmax = 5135105.53;
-    //fmin = 5134497.66;
-    //fmax = 5135308.53;
+    //fmin = 5135267.00;
+    //fmax = 5135268.00;
+    fmin = 5134497.66;
+    fmax = 5135308.53;
     //finto
     //fmin = 5101689.983547;
     //fmax = 5101700.014884;
     p.y = fmin + f * (fmax - fmin);
     cout.precision(10);
-    cerr << "i " <<i << endl;
+    //cerr << i << endl;
     cout << i << " " << p.x << " " << p.y << " ";
     cout << sl.get_elevation(p) << " " << endl;
   }
@@ -122,7 +122,7 @@ void test_start_points(const GisBackend& gb)
 
 void run_simulation(Slope& sl)
 {
-  double dtime = 10;
+  double dtime = 0.01;
   double total_time = 60*60 *4;
   for (int t=0; t<total_time; t+=dtime)
   {

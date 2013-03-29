@@ -18,4 +18,12 @@ public:
   virtual Vector apply(const Skier& skier) = 0;
 };
 
+class DownhillForce : public PhysicalForce {
+public:
+  Vector apply(const Skier& skier);
+
+  ~DownhillForce() { }
+private:
+};
+
 #endif /* PHYSICALFORCE_H */

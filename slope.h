@@ -32,10 +32,13 @@ class Slope {
 public:
   Slope(const GisBackend& gb,
         std::ofstream &output_file);
+  ~Slope();
 
   //returns the elevation for the point p, slope is taken into account
   double get_elevation(const Point& p) const;
+  //returns the slope angle in radians
   double get_slope(const Point& p) const;
+  //returns the aspect angle in radians
   double get_aspect(const Point& p) const;
   double distance_from_left(const Point& p) const;
   double distance_from_right(const Point& p) const;
@@ -46,11 +49,11 @@ public:
   //returns the slope along the line p1-p2 in the direction from p1 to p2
   double get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const;
   //Returns the intersection point of the line from start to end  with the slope
-  //edge and the angle that it forms with the perpendicular to the edge
+  //edge and the angle (in radians) that it forms with the perpendicular to the edge
   bool reflect_line(const Point& start,
-                    const Poitn& end,
+                    const Point& end,
                     Point* intersection,
-                    double* angle);
+                    double* angle) const;
   void update(double dtime);
   const std::set<PhysicalForce*>& get_physical_forces() const;
   const std::set<SocialForce*>& get_social_forces() const;

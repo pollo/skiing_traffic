@@ -17,7 +17,7 @@ using namespace std;
 #include <iostream>
 #include <algorithm>
 
-#define EPS 0.00000000001
+#define EPS 0.001
 #define K 0.00001
 
 Skier::Skier(int id,
@@ -43,27 +43,32 @@ Skier::Skier(int id,
   id(id), slope(sl), position(position), mass(settings::average_mass)
 {
   double slope, aspect;
-  const double d2g = settings::degree_to_radians;
   slope = get_current_slope();
   aspect = get_current_aspect();
   //the skier is not allowed to fly
   (this->position).z = get_current_elevation();
   //initial direction is along the fall line
-  direction.x = cos(slope * d2g) * cos(aspect * d2g);
-  direction.y = cos(slope * d2g) * sin(aspect * d2g);
-  direction.z = sin(slope * d2g) * -1;
+  direction.x = cos(slope) * cos(aspect);
+  direction.y = cos(slope) * sin(aspect);
+  direction.z = sin(slope) * -1;
+  cout << "direction inclination " << direction.inclination_angle() <<endl;
+  cout << "get_current_inclination_angle " << get_current_inclination_angle() << endl;
+  cout << slope << endl;
   //check vector direction to be on the slope plane
   assert(abs(-slope - get_current_inclination_angle()) < EPS);
   //initial velocity is 0
-  velocity.x = 0;
-  velocity.y = 0;
-  velocity.z = 0;
+  //velocity.x = 0;
+  //velocity.y = 0;
+  //velocity.z = 0;
+  //initial velocity is 1 (equal to direction)
+  velocity = direction;
   //initial acceleration is 0
   acceleration.x = 0;
   acceleration.y = 0;
   acceleration.z = 0;
 }
 
+//returns the inclination angle along the direction
 double Skier::get_current_inclination_angle() const
 {
   return slope.get_slope_from_p1_to_p2(position,position+direction);
@@ -80,14 +85,42 @@ void Skier::update(double dtime)
 {
   bool cell_border_reached = false;
   double time_to_reach_border;
-  //computes acceleration before moving
-  update_acceleration();
+  //cout << "dtime " << dtime << endl;
   //moves skier for dtime or until the cell border is reached
   cell_border_reached = update_position(dtime, &time_to_reach_border);
+  cerr.precision(13);
+  cerr << position.x << " " << position.y <<" " << position.z << " (" << velocity.x
+       <<","<< velocity.y <<","<< velocity.z<<") " << velocity.norm()<<" ("<<acceleration.x
+       <<","<<acceleration.y<<","<<acceleration.z<<") "<< endl;
+  //cout << "inclination angle " << get_current_inclination_angle() << endl;
+  //cout << "position" << endl;
+  //cout << position;
+  if (cell_border_reached)
+  {
+    //adjust direction to have inclination angle of the plane
+    //because it will be used in the acceleration computation
+    direction.rotate_axis_xy(direction.inclination_angle() -
+                             get_current_inclination_angle());
+  }
+  //cout << "direction" << endl;
+  //cout << direction;
+  //cout << direction.inclination_angle() << endl;
+  //computes acceleration
+  update_acceleration();
+  //cout << "acceleration" << endl;
+  //cout << acceleration;
+  //cout << acceleration.inclination_angle() << endl;
   //if the cell border is reached update velocity only for the time used
   if (cell_border_reached)
-    update_velocity(time_to_reach_border);
+    update_velocity(time_to_reach_border, true);
+  else
+    update_velocity(dtime, false);
   update_direction();
+  //cout << "velocity" << endl;
+  //cout << velocity;
+  //cout << velocity.inclination_angle() << endl;
+  if (velocity.norm() > 0 )
+    assert(abs(velocity.inclination_angle()-get_current_inclination_angle())<EPS);
   if (cell_border_reached)
     update(dtime-time_to_reach_border);
 }
@@ -106,11 +139,27 @@ bool Skier::update_position(double dtime, double* time_to_reach_border)
   //if new position is inside the cell
   if ((d.x>=west && d.x<east) && (d.y>=sud && d.y<north))
   {
+    //cout << "inside cell" << endl;
+    double elev = slope.get_elevation(d);
+    cout.precision(10);
+    //cout << "--------------------" << endl;
+    //cout << "destination" << endl << d;
+    //cout << elev << endl;
+    slope.get_elevation(d);
+    //cout << "position" << endl << position;
+    slope.get_elevation(position);
+    //cout << "position to destination " << slope.get_slope_from_p1_to_p2(position, d)/settings::degree_to_radians  << endl;
+    //cout << "--------------------" << endl;
+    //cout << "error " << abs(d.z - elev) << endl;
+    assert(abs(d.z - elev) < EPS);
+    d.z = elev;
     border_reached = false;
   }
   else
   {
+    cout << "outside cell" << endl;
     double xtime, ytime, time;
+    double elev;
     //time to reach x border
     if (velocity.x > 0)
       xtime = (east - position.x) / velocity.x;
@@ -122,41 +171,67 @@ bool Skier::update_position(double dtime, double* time_to_reach_border)
     else
       ytime = (sud - position.y) / velocity.y;
     time = min(xtime,ytime);
-    cout << "x " << position.x << endl;
-    cout << "y " << position.y << endl;
+    cout << "time to border " << time << endl;
     d = position + velocity * time;
-    cout << "x " << d.x << endl;
-    cout << "y " << d.y << endl;
-    cout << "position " << d.z << endl;
-    cout << get_current_elevation();
-    assert(abs(d.z - get_current_elevation()) < EPS);
     //adding K needed to cross the cell
-    d.x += K;
-    d.y += K;
+    if (xtime<ytime)
+      d.x += K * (velocity.x > 0 ? 1 : -1);
+    else
+      d.y += K * (velocity.y > 0 ? 1 : -1);
     *time_to_reach_border = time;
     border_reached = true;
+    elev = slope.get_elevation(d);
+    cout << "height difference " << d.z << " " << elev << endl;
+    //check that height difference from one cell to another is not
+    //greater than 20 cm
+    if (abs(d.z - elev) > 0.2)
+    {
+      static int i=1;
+      cerr.precision(13);/*
+      cerr << "Warning: From position x=" << position.x <<" y="<<position.y;
+      cerr <<"to x="<<d.x<<" y="<<d.y<<" there is a difference in elevation";
+      cerr <<" estimated and real elevation of "<<abs(d.z - elev)<<endl;*/
+      //cerr << i << " " << d.x << " " << d.y <<" " << d.z << " " << endl;
+      //cerr << i*100 << " " << d.x << " " << d.y <<" " << elev << " " << endl;
+      i++;
+    }
+    //assert(abs(d.z - elev) < 0.50);
+    //adjust elevation
+    d.z = elev;
   }
   if (!slope.is_inside_slope(d))
   {
     Point intersection;
     Point difference;
     double angle;
+    cerr << "x y z\n";
+    cerr << position.x << " " << position.y <<" " << position.z << " " << endl;
+    cerr << d.x << " " << d.y <<" " << d.z << " " << endl;
     slope.reflect_line(position,d,&intersection,&angle);
-    angle = angle * settings::degree_to_radians;
+    cout << "angle "<< angle/settings::degree_to_radians<<endl;
     //vector from position to intersection
     difference = position - intersection;
     //vector from intersection to destination
-    difference.rotate(angle);
+    difference.rotate(2*angle);
     position = intersection + difference;
     position.z = get_current_elevation();
+    //update velocity and direction
+    direction.rotate(2*angle);
+    velocity.x *= -1;
+    velocity.y *= -1;
+    velocity.rotate(2*angle);
+    //update x and y of direction in order to compute inclination angle
+    update_direction();
+    velocity.rotate_axis_xy(velocity.inclination_angle() -
+                            get_current_inclination_angle());
+    update_direction();
+    cerr << position.x << " " << position.y <<" " << position.z << " " << endl;
     assert(slope.is_inside_slope(position));
   }
   else
     position = d;
   return border_reached;
 }
-
-
 
 void Skier::update_acceleration()
 {
@@ -165,19 +240,35 @@ void Skier::update_acceleration()
   for (set<PhysicalForce*>::const_iterator iter = forces.begin();
        iter != forces.end(); ++iter)
   {
+    assert(abs(abs((*iter)->apply(*this).inclination_angle()) -
+               abs(get_current_inclination_angle())) < EPS);
     force += (*iter)->apply(*this);
   }
   acceleration = force / mass;
 }
 
-void Skier::update_velocity(double dtime)
+void Skier::update_velocity(double dtime, bool update_inclination)
 {
+  //if the cell is changed adjust old velocity inclination so that it still
+  //lies on the plane of the slope
+  if (update_inclination)
+    velocity.rotate_axis_xy( velocity.inclination_angle() -
+                             get_current_inclination_angle());
   velocity = velocity + acceleration * dtime;
+
+  if (velocity.norm() < 1)
+  {
+    //assume that the minimum velocity is 1 m/s -> 3.6 Km/h, when the skier has
+    //this velocity he is walking problably due to a counter slope
+    assert(get_current_inclination_angle() > 0);
+    velocity.normalize();
+  }
 }
 
 void Skier::update_direction()
 {
-  direction = velocity / velocity.norm();
+  if (velocity.norm() > 0)
+    direction = velocity / velocity.norm();
 }
 
 double Skier::get_current_elevation() const
@@ -185,6 +276,7 @@ double Skier::get_current_elevation() const
   return slope.get_elevation(position);
 }
 
+//returns the slope of the cell
 double Skier::get_current_slope() const
 {
   return slope.get_slope(position);

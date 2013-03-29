@@ -27,12 +27,15 @@ public:
         const Vector& position);
 
   Vector get_position() const { return position; }
+  Vector get_direction() const { return direction; }
+  double get_mass() const { return mass; }
   int get_id() const { return id; }
 
   double get_current_elevation() const;
   double get_current_slope() const;
   double get_current_aspect() const;
-  //returns the inclination angle along the current trajectory
+  //returns the inclination angle along the current trajectory (if the trajectory is downhill
+  //the angle is negative
   double get_current_inclination_angle() const;
 
   void update(double dtime);
@@ -49,7 +52,7 @@ private:
   //updates the position of the skier using the Vector velocity
   //moves for dtime seconds
   bool update_position(double dtime, double* time_to_reach_border);
-  void update_velocity(double dtime);
+  void update_velocity(double dtime, bool update_inclination);
   void update_direction();
   void update_acceleration();
 };

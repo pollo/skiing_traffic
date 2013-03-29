@@ -6,8 +6,8 @@ DEBUG=-g
 
 all: skiing_traffic
 
-skiing_traffic: main.o grassbackend.o slope.o downhill_force.o parameters.o skier.o
-	$(CC) $(LIBS) $(INC) $(DEBUG) main.o slope.o grassbackend.o parameters.o skier.o -o skiing_traffic
+skiing_traffic: main.o grassbackend.o slope.o downhill_force.o parameters.o skier.o vector.o downhill_force.o
+	$(CC) $(LIBS) $(INC) $(DEBUG) main.o slope.o grassbackend.o parameters.o skier.o vector.o downhill_force.o -o skiing_traffic
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) main.cpp
@@ -26,6 +26,9 @@ parameters.o: parameters.cpp parameters.h
 
 downhill_force.o: downhill_force.cpp downhill_force.h parameters.h
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) downhill_force.cpp
+
+vector.o: vector.cpp vector.h
+	$(CC) $(CFLAGS) $(INC) $(DEBUG) vector.cpp
 
 clean:
 	find . -name "*.o" | xargs rm -f

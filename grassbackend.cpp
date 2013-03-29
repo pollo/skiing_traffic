@@ -14,7 +14,7 @@
 #include <cmath>
 #include <cassert>
 
-#define EPS 0.001
+#define EPS 0.000000001
 
 
 using namespace std;
@@ -243,8 +243,8 @@ void GrassBackend::get_cell_bound(double x, double y,
   row = (int) G_northing_to_row(y, &window);
   *east = G_col_to_easting(col+1.0, &window);
   *west = G_col_to_easting(col, &window);
-  *north = G_row_to_northing(row+1.0, &window);
-  *sud = G_row_to_northing(row, &window);
+  *north = G_row_to_northing(row, &window);
+  *sud = G_row_to_northing(row+1.0, &window);
 }
 
 double frand(double min, double max)
@@ -285,6 +285,7 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
   double plx, ply;
   line_pnts* intersection = Vect_new_line_struct();
   line_pnts* line = Vect_new_line_struct();
+  double angle_sign;
   Vect_append_point(line, sx, sy, 0);
   Vect_append_point(line, dx, dy, 0);
   if (Vect_line_get_intersections(line,line_right,intersection,0) > 0)
@@ -302,6 +303,8 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
                        &dist_to_line,  //distance
                        NULL,   //distance from segment
                        NULL);  //distance from line along line
+    //if reflecting on the right_edge the angle should be positive
+    angle_sign = -1.0;
   }
   else
   {
@@ -319,6 +322,8 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
                          &dist_to_line,  //distance
                          NULL,   //distance from segment
                          NULL);  //distance from line along line
+      //if reflecting on the left_edge the angle should be negative
+      angle_sign = 1.0;
     }
     else
     {
@@ -338,6 +343,7 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
       *angle = 90.0;
     else
       *angle = atan(dist_on_line/dist_to_line) / degree_to_radians;
+    *angle *= angle_sign;
   }
   Vect_destroy_line_struct(intersection);
   Vect_destroy_line_struct(line);
