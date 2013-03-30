@@ -9,14 +9,13 @@ using namespace std;
 
 #include "slope.h"
 #include "parameters.h"
-#include "downhill_force.h"
 #include <stdexcept>
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <cassert>
 
-#define EPS 0.001
+#define EPS 0.000000000000000000001
 
 Slope::Slope(const GisBackend& gb,
              std::ofstream &output_file) : gb(gb), output_file(output_file)
@@ -28,6 +27,12 @@ Slope::Slope(const GisBackend& gb,
   output_file << "id x y z " << endl;
 
   pf = new DownhillForce();
+  physical_forces.insert(pf);
+  pf = new AirDragForce();
+  physical_forces.insert(pf);
+  pf = new KineticFrictionForce();
+  physical_forces.insert(pf);
+  pf = new CentripetalForce();
   physical_forces.insert(pf);
 }
 
@@ -101,14 +106,14 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
 
   //compute the angle beetween the line parallel to the x direction passing
   //through p1 and the line from p1 to p2
-  if (abs(x) < EPS)
+/*  if (abs(x) < EPS)
     //avoid division by small x: the angle is pi/2 or -pi/2 depending on y
     angle_line_points = (y>0 ? M_PI / 2.0 : M_PI * 3.0/2.0);
-  else
-    //atan is between pi/2 and -pi/2, if in 2 or 3 quadrant add pi to correct
-    //tha angle
-    angle_line_points = atan(y/x) + (x<0 ? M_PI : 0) +
-      (x>0 && y<0 ? 2 * M_PI : 0);
+    else*/
+  //atan is between pi/2 and -pi/2, if in 2 or 3 quadrant add pi to correct
+  //tha angle
+  angle_line_points = atan(y/x) + (x<0 ? M_PI : 0) +
+    (x>0 && y<0 ? 2 * M_PI : 0);
 
   //cout << "angle line points " << angle_line_points/settings::degree_to_radians << endl;
 

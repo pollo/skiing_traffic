@@ -28,8 +28,11 @@ public:
 
   Vector get_position() const { return position; }
   Vector get_direction() const { return direction; }
+  Vector get_velocity() const { return velocity; }
   double get_mass() const { return mass; }
   int get_id() const { return id; }
+  bool turning() const { return (turning_right || turning_left); }
+  bool fall_line_crossed() const;
 
   double get_current_elevation() const;
   double get_current_slope() const;
@@ -48,6 +51,7 @@ private:
   Vector velocity;
   Vector acceleration;
   double mass;
+  bool turning_right, turning_left;
 
   //updates the position of the skier using the Vector velocity
   //moves for dtime seconds
@@ -55,6 +59,7 @@ private:
   void update_velocity(double dtime, bool update_inclination);
   void update_direction();
   void update_acceleration();
+  void reflect_edge(const Vector d);
 };
 
 #endif /* SKIER_H */

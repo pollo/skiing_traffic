@@ -14,9 +14,6 @@
 #include <cmath>
 #include <cassert>
 
-#define EPS 0.000000001
-
-
 using namespace std;
 
 //Reads a line from the vector map
@@ -339,10 +336,7 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
     assert(intersection->n_points == 1);
     Vect_copy_pnts_to_xyz(intersection,px,py,NULL,&n);
     dist_on_line = Vect_points_distance(*px,*py,0,plx,ply,0,0);
-    if (dist_to_line < EPS)
-      *angle = 90.0;
-    else
-      *angle = atan(dist_on_line/dist_to_line) / degree_to_radians;
+    *angle = atan(dist_on_line/dist_to_line) / degree_to_radians;
     *angle *= angle_sign;
   }
   Vect_destroy_line_struct(intersection);

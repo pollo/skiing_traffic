@@ -23,8 +23,8 @@
 #include "gisbackend.h"
 #include "skier.h"
 #include "vector.h"
-#include "physicalforce.h"
-#include "socialforce.h"
+#include "socialforces.h"
+#include "physicalforces.h"
 #include <fstream>
 #include <set>
 
