@@ -6,8 +6,8 @@ DEBUG=-g
 
 all: skiing_traffic
 
-skiing_traffic: main.o grassbackend.o slope.o physicalforces.o parameters.o skier.o vector.o
-	$(CC) $(LIBS) $(INC) $(DEBUG) main.o slope.o grassbackend.o parameters.o skier.o vector.o physicalforces.o -o skiing_traffic
+skiing_traffic: main.o grassbackend.o slope.o physicalforces.o socialforces.o parameters.o skier.o vector.o
+	$(CC) $(LIBS) $(INC) $(DEBUG) main.o slope.o grassbackend.o parameters.o skier.o vector.o physicalforces.o socialforces.o -o skiing_traffic
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) main.cpp
@@ -26,6 +26,10 @@ parameters.o: parameters.cpp parameters.h
 
 physicalforces.o: physicalforces.cpp physicalforces.h parameters.h
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) physicalforces.cpp
+
+
+socialforces.o: socialforces.cpp socialforces.h parameters.h
+	$(CC) $(CFLAGS) $(INC) $(DEBUG) socialforces.cpp
 
 vector.o: vector.cpp vector.h
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) vector.cpp

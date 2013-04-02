@@ -19,11 +19,15 @@ public:
   //returns the aspect value at the coordinates x y
   virtual double get_aspect(double x, double y) const = 0;
 
-  //returns the distance between x y and the left slope edge
-  virtual double distance_from_left(double x, double y) const = 0;
+  //returns the distance between x y and the left slope edg
+  //also the intersection point can be reported
+  virtual double distance_from_left(double x, double y,
+                                    double *px, double *py) const = 0;
 
   //returns the distance between x y and the right slope edge
-  virtual double distance_from_right(double x, double y) const = 0;
+  //also the intersection point can be reported
+  virtual double distance_from_right(double x, double y,
+                                     double *px, double *py) const = 0;
 
   //returns the cell center coordinates
   virtual void get_cell_center(double x, double y,

@@ -15,12 +15,13 @@ using namespace std;
 #include <limits>
 #include <cassert>
 
-#define EPS 0.000000000000000000001
+#define EPS 0.000000000001
 
 Slope::Slope(const GisBackend& gb,
              std::ofstream &output_file) : gb(gb), output_file(output_file)
 {
   PhysicalForce *pf;
+  SocialForce *sf;
 
   time_since_last_skier = 0;
   next_skier_id = 1;
@@ -34,6 +35,13 @@ Slope::Slope(const GisBackend& gb,
   physical_forces.insert(pf);
   pf = new CentripetalForce();
   physical_forces.insert(pf);
+
+  sf = new LeftForce();
+  social_forces.insert(sf);
+  sf = new RightForce();
+  social_forces.insert(sf);
+  sf = new DestinationForce();
+  social_forces.insert(sf);
 }
 
 Slope::~Slope()
@@ -193,15 +201,34 @@ double Slope::get_aspect(const Point& p) const
   return gb.get_aspect(p.x, p.y) * settings::degree_to_radians;
 }
 
-double Slope::distance_from_left(const Point& p) const
+//distance from left edge reporting also intersection point
+double Slope::distance_from_left(const Point& p, Point* pl) const
 {
-  return gb.distance_from_left(p.x, p.y);
+  double dist = gb.distance_from_left(p.x, p.y, &(pl->x), &(pl->y));;
+  pl->z = get_elevation(*pl);
+  return dist;
 }
 
+//returns distance from left edge
+double Slope::distance_from_left(const Point& p) const
+{
+  return gb.distance_from_left(p.x, p.y, NULL, NULL);
+}
+
+//distance from right edge reporting also intersection point
+double Slope::distance_from_right(const Point& p, Point* pl) const
+{
+  double dist = gb.distance_from_right(p.x, p.y, &(pl->x), &(pl->y));
+  pl->z = get_elevation(*pl);
+  return dist;
+}
+
+//returns distance from right edge
 double Slope::distance_from_right(const Point& p) const
 {
-  return gb.distance_from_right(p.x, p.y);
+  return gb.distance_from_right(p.x, p.y, NULL, NULL);
 }
+
 
 bool Slope::is_inside_slope(const Point& p) const
 {

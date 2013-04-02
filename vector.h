@@ -24,6 +24,9 @@ struct Vector {
   //returns the inclination angle of the vector from the horizontal
   //in radians
   double inclination_angle() const;
+  //returns the angle of the vector with the x axis on the horizonal plane
+  //in radians
+  double angle_on_xyplane() const;
 
   Vector& operator+=(const Vector& v)
   {

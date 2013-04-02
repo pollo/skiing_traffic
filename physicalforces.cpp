@@ -1,7 +1,7 @@
 /*
- * File:   downhill_force.cpp
+ * File:   physicalforces.cpp
  *
- * Defines the downhill force acting on a skier
+ * Defines the physical forces acting on a skier
  *
  */
 
@@ -12,11 +12,10 @@
 
 using namespace std;
 
-#define EPS 0.000000001
+#define EPS 0.00000001
 
 Vector DownhillForce::apply(const Skier& skier)
 {
-  //cout << "downhill\n";
   Vector force;
   const double g = settings::g;
   double angle = skier.get_current_inclination_angle();
@@ -25,12 +24,14 @@ Vector DownhillForce::apply(const Skier& skier)
   angle *= -1;
   //fp = mg (sin γ) er
   force = skier.get_mass() * g * sin(angle) * skier.get_direction();
+  //cout << "downhill " << skier.get_direction().inclination_angle() << " " << force.inclination_angle() << endl;
+  //cout << force.inclination_angle() << " " << skier.get_current_inclination_angle() << endl;
+  assert(abs(abs(force.inclination_angle()) - abs(skier.get_current_inclination_angle())) < EPS);
   return force;
 }
 
 Vector CentripetalForce::apply(const Skier& skier)
 {
-  //cout << "centripeta\n";
   if (!skier.turning())
   {
     return Vector(0,0,0);
@@ -42,29 +43,33 @@ Vector CentripetalForce::apply(const Skier& skier)
     double m = skier.get_mass();
     double r = (skier.get_velocity()).norm();
     Vector f_lat = fall_line_force(skier) - fp.apply(skier);
+    //cout << fall_line_force(skier) << " " << fp.apply(skier) <<endl;
+    //cout << "-------------" << endl;
+    //cout << fall_line_force(skier).angle_on_xyplane() << " " << fp.apply(skier).angle_on_xyplane() <<endl;
     f_lat.normalize();
-    ////cout << f_lat;
     double direction = (skier.fall_line_crossed() ? -1 : 1);
-    ////cout << direction <<endl;
+    //cout << "forza laterale\n";
+    //cout << f_lat;
+    //cout << "x_angle " << f_lat.angle_on_xyplane()/settings::degree_to_radians <<endl;
     return m / rsc * r*r * f_lat * direction;
   }
 }
 
 Vector AirDragForce::apply(const Skier& skier)
 {
-  //cout << "airdrag\n";
   const double cd = settings::air_drag_coefficient;
   const double A = settings::frontal_area;
   const double p = settings::air_density;
   double r = (skier.get_velocity()).norm();
+  //cout << "airdrag\n";
   return -0.5 * cd * A * p * r*r * skier.get_direction();
 }
 
 Vector KineticFrictionForce::apply(const Skier& skier)
 {
-  //cout << "kinetic\n";
   const double u = settings::kinetic_friction_coefficient;
   double f_eff = effective_force(skier).norm();
+  //cout << "kinetic\n";
   return -u * f_eff * skier.get_direction();
 }
 
@@ -98,6 +103,7 @@ Vector fall_line_force(const Skier& skier)
 
   //cout << force.inclination_angle() << " " << skier.get_current_slope() << endl;
   assert(abs(force.inclination_angle() + skier.get_current_slope()) < EPS);
+  assert(abs(force.angle_on_xyplane() - skier.get_current_aspect()) < EPS);
 
   return force;
 }

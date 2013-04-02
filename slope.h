@@ -40,6 +40,8 @@ public:
   double get_slope(const Point& p) const;
   //returns the aspect angle in radians
   double get_aspect(const Point& p) const;
+  double distance_from_left(const Point& p, Point *pl) const;
+  double distance_from_right(const Point& p, Point *pl) const;
   double distance_from_left(const Point& p) const;
   double distance_from_right(const Point& p) const;
   void get_cell_bound(const Point& p,

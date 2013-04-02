@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#define EPS 0.00000000001
+
 //the vector is rotated around the z axix for angle radians
 void Vector::rotate(double angle)
 {
@@ -42,7 +44,14 @@ void Vector::rotate_axis_xy(double angle)
 
 void Vector::normalize()
 {
-  *this /= this->norm();
+  if (this->norm() > EPS)
+    *this /= this->norm();
+  else
+  {
+    x = 0;
+    y = 0;
+    z = 0;
+  }
 }
 
 double Vector::norm() const
@@ -55,9 +64,15 @@ double Vector::inclination_angle() const
   return atan(z / sqrt(x*x+y*y));
 }
 
+double Vector::angle_on_xyplane() const
+{ 
+  return atan(y / x) + (x<0 ? M_PI : 0) + (x>0 && y<0 ? 2 * M_PI : 0);
+}
+
 std::ostream& operator<<(std::ostream& os,const Vector v)
 {
   os.precision(13);
   os << "( " << v.x << std::endl << "  " << v.y << std::endl << "  " << v.z << " )\n";
   return os;
 }
+

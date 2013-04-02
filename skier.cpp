@@ -17,7 +17,7 @@ using namespace std;
 #include <iostream>
 #include <algorithm>
 
-#define EPS 0.000000001
+#define EPS 0.0000001
 #define K 0.00001
 
 Skier::Skier(int id,
@@ -28,7 +28,7 @@ Skier::Skier(int id,
              const Vector &acceleration):
   id(id), slope(slope), position(position), direction(direction),
   velocity(velocity), acceleration(acceleration),
-  mass(settings::average_mass)
+  mass(settings::average_mass), time_since_last_waypoint(0)
 {
   //the skier is not allowed to fly
   (this->position.z) = get_current_elevation();
@@ -41,7 +41,7 @@ Skier::Skier(int id,
              const Slope& sl,
              const Point &position) :
   id(id), slope(sl), position(position), mass(settings::average_mass),
-  turning_right(false), turning_left(false)
+  turning_right(false), turning_left(false), time_since_last_waypoint(0)
 {
   double slope, aspect;
   slope = get_current_slope();
@@ -67,12 +67,138 @@ Skier::Skier(int id,
   acceleration.x = 0;
   acceleration.y = 0;
   acceleration.z = 0;
+  //srand((unsigned)time(NULL));
 }
 
 //returns the inclination angle along the direction
 double Skier::get_current_inclination_angle() const
 {
   return slope.get_slope_from_p1_to_p2(position,position+direction);
+}
+
+void Skier::decide_turn()
+{
+  Vector force(0,0,0);
+  Point a;
+  double alfa, dir;
+  double delta = settings::directional_deviation;
+  const set<SocialForce*>& forces = slope.get_social_forces();
+  for (set<SocialForce*>::const_iterator iter = forces.begin();
+       iter != forces.end(); ++iter)
+  {
+    force += (*iter)->apply(*this);
+  }
+  cout << "force " << force;
+  alfa = force.angle_on_xyplane();
+  dir = direction.angle_on_xyplane();
+  cout << "sinistra " << current_distance_from_left(&a) << " ";
+  cout << "destra " << current_distance_from_right(&a) << endl;
+  cout << "alfa " << alfa/settings::degree_to_radians << endl;
+  cout << "dir " << dir/settings::degree_to_radians << endl;
+  if (abs(alfa-dir) > delta)
+  {
+    if (alfa < M_PI)
+    {
+      if (dir - alfa > 0 && dir-alfa < M_PI)
+      {
+        cout << "right\n";
+        //turn right
+        turning_right = true;
+        turning_left = false;
+      }
+      else
+      {
+        cout << "left\n";
+        //turn left
+        turning_right = false;
+        turning_left = true;
+      }
+    }
+    else
+    {
+      if (alfa -dir > 0 && alfa -dir < M_PI)
+      {
+        cout << "left\n";
+        //turn right
+        turning_right = false;
+        turning_left = true;
+      }
+      else
+      {
+        cout << "right\n";
+        //turn left
+        turning_right = true;
+        turning_left = false;
+      }
+    }
+  }
+  if (abs(alfa-dir) < settings::stop_turning)
+  {
+    turning_right = false;
+    turning_left = false;
+  }
+}
+
+//the waypoint is choosen in this way: the direction is taken between the line
+//to the left edge and the line to the right edege. If alfa is the angle between
+//the right line and the left line, the waypoint direction is taken with an
+//uniform distribution between 0+alfa/8 and alfa-alfa/8
+void Skier::choose_waypoint(double dtime)
+{
+  bool waypoint_valid;
+  double waypoint_angle;
+  Point left, right;
+  Vector line_left, line_right;
+  double alfa;
+  double angle;
+  double angle_right, angle_left;
+  double frac = settings::limit_angle_waypoint;
+  time_since_last_waypoint += dtime;
+  //compute waypoint angle
+  waypoint_angle = (waypoint-position).angle_on_xyplane();
+  //computes distances and angles
+  current_distance_from_left(&left);
+  current_distance_from_right(&right);
+  line_left = left - position;
+  line_right = right - position;
+  angle_left = line_left.angle_on_xyplane();
+  angle_right = line_right.angle_on_xyplane();
+  //compute alfa angle between right line and left_line
+  if (angle_right < angle_left)
+  {
+    alfa = angle_left - angle_right;
+    waypoint_valid = (waypoint_angle > angle_right + alfa*frac &&
+                      waypoint_angle < angle_right + alfa*(1-frac));
+  }
+  else
+  {
+    alfa = 2*M_PI - (angle_right - angle_left);
+    if (angle_right + alfa*frac > 2*M_PI)
+      waypoint_valid = (waypoint_angle > angle_right + alfa*frac - 2*M_PI &&
+                      waypoint_angle < angle_right + alfa*(1-frac) - 2*M_PI);
+    else
+    {
+      if (angle_right + alfa*(1-frac) > 2*M_PI)
+        waypoint_valid = (waypoint_angle > angle_right + alfa*frac ||
+                          waypoint_angle < angle_right + alfa*(1-frac) - 2*M_PI);
+      else
+        waypoint_valid = (waypoint_angle > angle_right + alfa*frac &&
+                          waypoint_angle < angle_right + alfa*(1-frac));
+    }
+  }
+  if (time_since_last_waypoint > settings::time_between_waypoints ||
+      !waypoint_valid)
+  {
+    angle = alfa*frac + (double)rand()/(double)RAND_MAX * alfa*(1-frac*2);
+    line_right.normalize();
+    line_right *= settings::distance_waypoint;
+    line_right.rotate(angle);
+    waypoint = position + line_right;
+    cerr << position.x << " " << position.y << " " << position.z << " "
+         << angle_right/settings::degree_to_radians << " " << angle_left/settings::degree_to_radians << " " << angle << " " <<endl;
+    cerr << waypoint.x << " " << waypoint.y << " " << waypoint.z << " 0 0 0 "<< endl;
+    time_since_last_waypoint = 0;
+  }
 }
 
 //Updates the position and the parameters of the skier for a time of dtime
@@ -90,10 +216,10 @@ void Skier::update(double dtime)
   //moves skier for dtime or until the cell border is reached
   cell_border_reached = update_position(dtime, &time_to_reach_border);
   cerr.precision(13);
-  cerr << position.x << " " << position.y <<" " << position.z << " (" << velocity.x
+  /*cerr << position.x << " " << position.y <<" " << position.z << " (" << velocity.x
        <<","<< velocity.y <<","<< velocity.z<<") " << velocity.norm()<<" ("<<acceleration.x
        <<","<<acceleration.y<<","<<acceleration.z<<") "
-       << (turning_left ? 1 : (turning_right ? 2 : 0)) << " " << endl;
+       << (turning_left ? 1 : (turning_right ? 2 : 0)) << " " << endl;*/
   //cout << "inclination angle " << get_current_inclination_angle() << endl;
   //cout << "position" << endl;
   //cout << position;
@@ -125,7 +251,9 @@ void Skier::update(double dtime)
     assert(abs(velocity.inclination_angle()-get_current_inclination_angle())<EPS);
   if (cell_border_reached)
     update(dtime-time_to_reach_border);
-
+  choose_waypoint(dtime);
+  //start turning if needed
+  decide_turn();
 }
 
 void Skier::reflect_edge(const Vector d)
@@ -247,18 +375,25 @@ void Skier::update_acceleration()
 {
   Vector force(0,0,0);
   const set<PhysicalForce*>& forces = slope.get_physical_forces();
+  cout << get_current_inclination_angle() << endl;
   for (set<PhysicalForce*>::const_iterator iter = forces.begin();
        iter != forces.end(); ++iter)
   {
-//    Vector tmp =(*iter)->apply(*this);
-//    assert(abs(slope.get_slope_from_p1_to_p2(position,position+tmp) -
-//             tmp.inclination_angle()) < EPS);
-//    cout << force;
-    force += (*iter)->apply(*this);
+    Vector tmp =(*iter)->apply(*this);
+    //cout << "direction " << direction;
+    //cout << "out " << tmp.inclination_angle() << " " << slope.get_slope_from_p1_to_p2(position,position+tmp) << endl;
+    if (tmp.norm() > 0)
+      assert(abs(slope.get_slope_from_p1_to_p2(position,position+tmp) -
+                 tmp.inclination_angle()) < EPS);
+    //force += (*iter)->apply(*this);
+    force += tmp;
+    //cout << force.inclination_angle() << endl;
+    //cout << force;
   }
+  //cout << endl;
   acceleration = force / mass;
-//  cout << slope.get_slope_from_p1_to_p2(position,position+acceleration)
-//       << " " << acceleration.inclination_angle() << endl;
+  //cout << slope.get_slope_from_p1_to_p2(position,position+acceleration)
+  //     << " " << acceleration.inclination_angle() << endl;
   assert(abs(slope.get_slope_from_p1_to_p2(position,position+acceleration) -
              acceleration.inclination_angle()) < EPS);
 }
@@ -291,8 +426,7 @@ bool Skier::fall_line_crossed() const
 {
   double dir;
   double aspect = get_current_aspect();
-  dir = atan(direction.y / direction.x) + (direction.x<0 ? M_PI : 0) +
-    (direction.x>0 && direction.y<0 ? 2 * M_PI : 0);
+  dir = direction.angle_on_xyplane();
 
   //cout << "dir " << dir/settings::degree_to_radians << " asp " << aspect/settings::degree_to_radians << endl;
 
@@ -329,4 +463,16 @@ double Skier::get_current_slope() const
 double Skier::get_current_aspect() const
 {
   return slope.get_aspect(position);
+}
+
+//returns distance from left and intersection point
+double Skier::current_distance_from_left(Point *p) const
+{
+  return slope.distance_from_left(position,p);
+}
+
+//returns distance from right and intersection point
+double Skier::current_distance_from_right(Point *p) const
+{
+  return slope.distance_from_right(position,p);
 }

@@ -45,10 +45,14 @@ public:
   double get_aspect(double x, double y) const;
 
   //returns the distance between x y and the left slope edge
-  double distance_from_left(double x, double y) const;
+  //also the intersection point can be reported
+  double distance_from_left(double x, double y,
+                            double *px, double *py) const;
 
   //returns the distance between x y and the right slope edge
-  double distance_from_right(double x, double y) const;
+  //also the intersection point can be reported
+  double distance_from_right(double x, double y,
+                             double *px, double *py) const;
 
   //checks if the give point is inside the ski slope
   bool is_inside_slope(double x, double y) const;

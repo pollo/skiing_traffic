@@ -175,7 +175,8 @@ bool GrassBackend::is_inside_slope(double x, double y) const
 
 //Assumes that there is unique feature in the map: the line rappresenting
 //the left edge. Computes the distance from this line
-double GrassBackend::distance_from_left(double x, double y) const
+double GrassBackend::distance_from_left(double x, double y,
+                                        double *px, double *py) const
 {
   double dist;
   Vect_line_distance(line_left,
@@ -183,8 +184,8 @@ double GrassBackend::distance_from_left(double x, double y) const
                      y,
                      0,      //z
                      0,      //with_z FALSE
-                     NULL,   //point_on_line x
-                     NULL,   //point_on_line y
+                     px,     //point_on_line x
+                     py,   //point_on_line y
                      NULL,   //point_on_line z
                      &dist,  //distance
                      NULL,   //distance from segment
@@ -195,7 +196,8 @@ double GrassBackend::distance_from_left(double x, double y) const
 
 //Assumes that there is unique feature in the map: the line rappresenting
 //the right edge. Computes the distance from this line
-double GrassBackend::distance_from_right(double x, double y) const
+double GrassBackend::distance_from_right(double x, double y,
+                                        double *px, double *py) const
 {
   double dist;
 
@@ -204,8 +206,8 @@ double GrassBackend::distance_from_right(double x, double y) const
                      y,
                      0,      //z
                      0,      //with_z FALSE
-                     NULL,   //point_on_line x
-                     NULL,   //point_on_line y
+                     px,     //point_on_line x
+                     py,     //point_on_line y
                      NULL,   //point_on_line z
                      &dist,  //distance
                      NULL,   //distance from segment
