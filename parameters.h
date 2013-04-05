@@ -9,6 +9,9 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#include <iostream>
+#include <fstream>
+
 struct settings {
   static const double g;
   static const double average_mass;
@@ -32,6 +35,46 @@ struct settings {
   static const double distance_waypoint;
   static const double waypoint_force_strength;
   static const double limit_angle_waypoint;
+  static const double dtime;
+
+  static std::ofstream& rep() {
+    static std::ofstream output;
+    static bool t = true;
+    if (t)
+    {
+      t = false;
+      output.open("/tmp/repulsion.csv");
+      output << "x y force norm " << std::endl;
+      output.precision(13);
+    }
+    return output;
+  }
+
+  static std::ofstream& right() {
+    static std::ofstream output;
+    static bool t = true;
+    if (t)
+    {
+      t = false;
+      output.open("/tmp/right.csv");
+      output << "x y force norm " << std::endl;
+      output.precision(13);
+    }
+    return output;
+  }
+
+  static std::ofstream& left() {
+    static std::ofstream output;
+    static bool t = true;
+    if (t)
+    {
+      t = false;
+      output.open("/tmp/left.csv");
+      output << "x y force norm ad ae " << std::endl;
+      output.precision(13);
+    }
+    return output;
+  }
 };
 
 #endif /* PARAMETERS_H */

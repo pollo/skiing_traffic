@@ -134,7 +134,7 @@ int main (int argc, char** argv)
 {
   GModule *module;
   Option *ski_slope_opt, *right_edge_opt, *left_edge_opt, *start_area_opt;
-  Option *dtm_opt, *slope_opt, *aspect_opt;
+  Option *stop_area_opt, *dtm_opt, *slope_opt, *aspect_opt;
 
   G_gisinit(argv[0]);
   module = G_define_module();
@@ -155,6 +155,9 @@ int main (int argc, char** argv)
   start_area_opt = decl_vect(
     "start_area",
     "Name of input vector map of the area where the skiers start");
+  stop_area_opt = decl_vect(
+    "stop_area",
+    "Name of input vector map of the area where the skiers stop");
 
   //raster map options declaration
   dtm_opt = decl_rast("elevation", "Name of elevation raster map");
@@ -170,6 +173,7 @@ int main (int argc, char** argv)
                           right_edge_opt->answer,
                           left_edge_opt->answer,
                           start_area_opt->answer,
+                          stop_area_opt->answer,
                           dtm_opt->answer,
                           slope_opt->answer,
                           aspect_opt->answer);

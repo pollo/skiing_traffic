@@ -25,7 +25,7 @@ Slope::Slope(const GisBackend& gb,
 
   time_since_last_skier = 0;
   next_skier_id = 1;
-  output_file << "id x y z " << endl;
+  output_file << "id x y z vel " << endl;
 
   pf = new DownhillForce();
   physical_forces.insert(pf);
@@ -41,6 +41,8 @@ Slope::Slope(const GisBackend& gb,
   sf = new RightForce();
   social_forces.insert(sf);
   sf = new DestinationForce();
+  social_forces.insert(sf);
+  sf = new SkiersForce(*this);
   social_forces.insert(sf);
 }
 
@@ -158,6 +160,14 @@ void Slope::start_skiers(double dtime)
     next_skier_id++;
     skiers.insert(s);
     time_since_last_skier -= time_between_skiers;
+
+    //TODO: remove following lines
+    gb.get_start_point(&p.x,&p.y);
+    s = new Skier(next_skier_id,*this,p);
+    next_skier_id++;
+    skiers.insert(s);
+    time_since_last_skier -= time_between_skiers;
+    //since here
   }
   time_since_last_skier += dtime;
 }
@@ -168,6 +178,11 @@ void Slope::update_skiers(double dtime)
        skier != skiers.end(); ++skier)
   {
     (*skier)->update(dtime);
+    if ((*skier)->is_inside_stop_area())
+    {
+      delete *skier;
+      skiers.erase(skier);
+    }
   }
 }
 
@@ -180,7 +195,8 @@ void Slope::log_skiers_situation() const
     output_file.precision(13);
     output_file << (*skier)->get_id() <<" "<< p.x <<" "<< p.y <<" ";
     output_file.precision(6);
-    output_file << p.z <<endl;
+    output_file << p.z <<" ";
+    output_file << (*skier)->get_velocity().norm()<<" "<<endl;
   }
 }
 
@@ -233,6 +249,11 @@ double Slope::distance_from_right(const Point& p) const
 bool Slope::is_inside_slope(const Point& p) const
 {
   return gb.is_inside_slope(p.x, p.y);
+}
+
+bool Slope::is_inside_stop_area(const Point& p) const
+{
+  return gb.is_inside_stop_area(p.x, p.y);
 }
 
 void Slope::get_cell_center(const Point& p,

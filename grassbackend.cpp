@@ -38,6 +38,7 @@ GrassBackend::GrassBackend (string ski_slope_name,
                             string right_edge_name,
                             string left_edge_name,
                             string start_area_name,
+                            string stop_area_name,
                             string elevation_name,
                             string slope_name,
                             string aspect_name)
@@ -53,9 +54,16 @@ GrassBackend::GrassBackend (string ski_slope_name,
   //open start area map
   if (!open_vector(&start_area,start_area_name))
     throw domain_error("Start area map "+start_area_name+" not found");
-  //check ski slope map
+  //check start area map
   if (Vect_get_num_areas(&start_area) != 1)
     throw domain_error("Start area map "+start_area_name+\
+                       " must have a single feature of type AREA");
+  //open stop area map
+  if (!open_vector(&stop_area,stop_area_name))
+    throw domain_error("Stop area map "+stop_area_name+" not found");
+  //check stop area map
+  if (Vect_get_num_areas(&stop_area) != 1)
+    throw domain_error("Stop area map "+stop_area_name+\
                        " must have a single feature of type AREA");
   //open right edge
   if (!open_vector(&right_edge,right_edge_name))
@@ -346,10 +354,21 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
   return found;
 }
 
+bool GrassBackend::is_inside_stop_area(double x, double y) const
+{
+  Map_info temp;
+  //GRASS 6 does not declare the map parameter const
+  //this trick is to mantain this method const
+  temp = stop_area;
+  return (Vect_point_in_area_outer_ring(x,y,&temp,1) == 1);
+}
+
 GrassBackend::~GrassBackend () {
   Vect_close(&ski_slope);
   Vect_close(&right_edge);
   Vect_close(&left_edge);
+  Vect_close(&start_area);
+  Vect_close(&stop_area);
   if (line_right)
     Vect_destroy_line_struct(line_right);
   if(line_left)

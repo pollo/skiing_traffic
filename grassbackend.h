@@ -30,6 +30,7 @@ public:
                std::string right_edge,
                std::string left_edge,
                std::string start_area_name,
+               std::string stop_area_name,
                std::string elevation_name,
                std::string slope_name,
                std::string aspect_name);
@@ -72,11 +73,15 @@ public:
   bool reflect_line(double sx, double sy, double dx, double dy,
                     double *px, double *py, double *angle) const;
 
+  //returns true if the point is inside the stop area
+  bool is_inside_stop_area(double x, double y) const;
+
  private:
   Map_info ski_slope;
   Map_info right_edge;
   Map_info left_edge;
   Map_info start_area;
+  Map_info stop_area;
   //file descriptors
   int elevation;
   RASTER_MAP_TYPE elevation_type;

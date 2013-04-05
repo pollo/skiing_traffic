@@ -5,6 +5,8 @@
 
 #define EPS 0.00000000001
 
+using namespace std;
+
 //the vector is rotated around the z axix for angle radians
 void Vector::rotate(double angle)
 {
@@ -56,7 +58,8 @@ void Vector::normalize()
 
 double Vector::norm() const
 {
-  return sqrt(x*x+y*y+z*z);
+  double n = sqrt(x*x+y*y+z*z);
+  return (isnan(n) ? 0 : n);
 }
 
 double Vector::inclination_angle() const
@@ -65,7 +68,13 @@ double Vector::inclination_angle() const
 }
 
 double Vector::angle_on_xyplane() const
-{ 
+{
+  //if (x<EPS)
+  //  return M_PI/2.0 * (y<0 ? -1 : 1);
+  //else
+  // cout.precision(15);
+  // cout << "x " << x << " y " << y << endl;
+  // cout << atan(y/x) << endl;
   return atan(y / x) + (x<0 ? M_PI : 0) + (x>0 && y<0 ? 2 * M_PI : 0);
 }
 

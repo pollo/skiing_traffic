@@ -7,9 +7,10 @@
 #ifndef SOCIALFORCE_H
 #define SOCIALFORCE_H
 
-
 #include "vector.h"
 #include "skier.h"
+
+class Slope;
 
 class SocialForce {
 public:
@@ -41,6 +42,19 @@ public:
   Vector apply(const Skier& skier);
 
   ~RightForce() { }
+};
+
+//models the repulsion force from the other skiers
+class SkiersForce : public SocialForce {
+public:
+  SkiersForce(const Slope& sl) : s(sl) { }
+
+  Vector apply(const Skier& skier);
+
+  ~SkiersForce() { }
+
+private:
+  const Slope& s;
 };
 
 #endif /* SOCIALFORCE_H */

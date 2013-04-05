@@ -48,6 +48,7 @@ public:
                       double *east, double *west,
                       double *north, double *sud) const;
   bool is_inside_slope(const Point& p) const;
+  bool is_inside_stop_area(const Point& p) const;
   //returns the slope along the line p1-p2 in the direction from p1 to p2
   double get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const;
   //Returns the intersection point of the line from start to end  with the slope

@@ -75,6 +75,12 @@ inline Vector operator-(Vector v1, const Vector& v2)
   return v1;
 }
 
+//scalar product
+inline double operator*(const Vector& v,const Vector& u)
+{
+  return v.x*u.x+v.y*u.y+v.z*u.z;
+}
+
 inline Vector operator*(Vector v, double a)
 {
   v *= a;

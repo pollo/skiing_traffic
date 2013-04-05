@@ -17,7 +17,7 @@ using namespace std;
 #include <iostream>
 #include <algorithm>
 
-#define EPS 0.0000001
+#define EPS 0.000001
 #define K 0.00001
 
 Skier::Skier(int id,
@@ -88,27 +88,27 @@ void Skier::decide_turn()
   {
     force += (*iter)->apply(*this);
   }
-  cout << "force " << force;
+  //cout << "force " << force;
   alfa = force.angle_on_xyplane();
   dir = direction.angle_on_xyplane();
-  cout << "sinistra " << current_distance_from_left(&a) << " ";
-  cout << "destra " << current_distance_from_right(&a) << endl;
-  cout << "alfa " << alfa/settings::degree_to_radians << endl;
-  cout << "dir " << dir/settings::degree_to_radians << endl;
+  //cout << "sinistra " << current_distance_from_left(&a) << " ";
+  //cout << "destra " << current_distance_from_right(&a) << endl;
+  //cout << "alfa " << alfa/settings::degree_to_radians << endl;
+  //cout << "dir " << dir/settings::degree_to_radians << endl;
   if (abs(alfa-dir) > delta)
   {
     if (alfa < M_PI)
     {
       if (dir - alfa > 0 && dir-alfa < M_PI)
       {
-        cout << "right\n";
+        //cout << "right\n";
         //turn right
         turning_right = true;
         turning_left = false;
       }
       else
       {
-        cout << "left\n";
+        //cout << "left\n";
         //turn left
         turning_right = false;
         turning_left = true;
@@ -118,14 +118,14 @@ void Skier::decide_turn()
     {
       if (alfa -dir > 0 && alfa -dir < M_PI)
       {
-        cout << "left\n";
+        //cout << "left\n";
         //turn right
         turning_right = false;
         turning_left = true;
       }
       else
       {
-        cout << "right\n";
+        //cout << "right\n";
         //turn left
         turning_right = true;
         turning_left = false;
@@ -194,9 +194,10 @@ void Skier::choose_waypoint(double dtime)
     line_right *= settings::distance_waypoint;
     line_right.rotate(angle);
     waypoint = position + line_right;
-    cerr << position.x << " " << position.y << " " << position.z << " "
-         << angle_right/settings::degree_to_radians << " " << angle_left/settings::degree_to_radians << " " << angle << " " <<endl;
-    cerr << waypoint.x << " " << waypoint.y << " " << waypoint.z << " 0 0 0 "<< endl;
+    waypoint.z = slope.get_elevation(waypoint);
+    //cerr << position.x << " " << position.y << " " << position.z << " "
+    //     << angle_right/settings::degree_to_radians << " " << angle_left/settings::degree_to_radians << " " << angle << " " <<endl;
+    //cerr << waypoint.x << " " << waypoint.y << " " << waypoint.z << " 0 0 0 "<< endl;
     time_since_last_waypoint = 0;
   }
 }
@@ -375,7 +376,7 @@ void Skier::update_acceleration()
 {
   Vector force(0,0,0);
   const set<PhysicalForce*>& forces = slope.get_physical_forces();
-  cout << get_current_inclination_angle() << endl;
+  //cout << get_current_inclination_angle() << endl;
   for (set<PhysicalForce*>::const_iterator iter = forces.begin();
        iter != forces.end(); ++iter)
   {
@@ -475,4 +476,9 @@ double Skier::current_distance_from_left(Point *p) const
 double Skier::current_distance_from_right(Point *p) const
 {
   return slope.distance_from_right(position,p);
+}
+
+bool Skier::is_inside_stop_area() const
+{
+  return slope.is_inside_stop_area(position);
 }

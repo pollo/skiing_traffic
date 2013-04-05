@@ -48,6 +48,9 @@ public:
   virtual bool reflect_line(double sx, double sy, double dx, double dy,
                             double *px, double *py, double *angle) const = 0;
 
+  //returns true if the point is inside the stop area
+  virtual bool is_inside_stop_area(double x, double y) const = 0;
+
   virtual ~GisBackend() { };
 private:
 

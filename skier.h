@@ -45,6 +45,7 @@ public:
   double current_distance_from_left(Point *pl) const;
   //returns distance from right and intersection point
   double current_distance_from_right(Point *pl) const;
+  bool is_inside_stop_area() const;
 
   void update(double dtime);
 
