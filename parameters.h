@@ -10,12 +10,15 @@
 #define PARAMETERS_H
 
 #include <iostream>
+#ifdef DEBUG
 #include <fstream>
+#endif
 
 struct settings {
   static const double g;
   static const double average_mass;
   static const int persons_hour;
+  static const int total_simulation_time; //seconds
   static const double degree_to_radians;
   static const double air_drag_coefficient;
   static const double frontal_area;
@@ -36,7 +39,8 @@ struct settings {
   static const double waypoint_force_strength;
   static const double limit_angle_waypoint;
   static const double dtime;
-
+  static const double limit_edge_distance;
+#ifdef DEBUG
   static std::ofstream& rep() {
     static std::ofstream output;
     static bool t = true;
@@ -75,6 +79,7 @@ struct settings {
     }
     return output;
   }
+#endif
 };
 
 #endif /* PARAMETERS_H */

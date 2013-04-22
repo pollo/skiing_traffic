@@ -18,6 +18,7 @@ extern "C" {
 #include <fstream>
 #include "grassbackend.h"
 #include "slope.h"
+#include "parameters.h"
 
 using namespace std;
 
@@ -123,8 +124,7 @@ void test_start_points(const GisBackend& gb)
 void run_simulation(Slope& sl)
 {
   double dtime = 0.01;
-  double total_time = 60*60 *4;
-  for (int t=0; t<total_time; t+=dtime)
+  for (double t=0; t<settings::total_simulation_time; t+=dtime)
   {
     sl.update(dtime);
   }

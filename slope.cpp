@@ -14,18 +14,18 @@ using namespace std;
 #include <iostream>
 #include <limits>
 #include <cassert>
+#include <cstdlib>
 
 #define EPS 0.000000000001
 
 Slope::Slope(const GisBackend& gb,
-             std::ofstream &output_file) : gb(gb), output_file(output_file)
+             std::ofstream &output_file) :
+  gb(gb), output_file(output_file), time_until_new_skier(0), next_skier_id(1)
 {
   PhysicalForce *pf;
   SocialForce *sf;
 
-  time_since_last_skier = 0;
-  next_skier_id = 1;
-  output_file << "id x y z vel " << endl;
+  output_file << "id x y z vel time " << endl;
 
   pf = new DownhillForce();
   physical_forces.insert(pf);
@@ -44,6 +44,8 @@ Slope::Slope(const GisBackend& gb,
   social_forces.insert(sf);
   sf = new SkiersForce(*this);
   social_forces.insert(sf);
+
+  //srand((unsigned)time(NULL));
 }
 
 Slope::~Slope()
@@ -146,30 +148,33 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
   //compute the slope from p1 to p2
   result_slope = asin( sin(slope) * sin(angle_horizontal_linepoints));
 
+  double radius = tan(slope);
+  Vector gradient(radius * cos(aspect + M_PI), radius * sin(aspect + M_PI));
+  Vector direction(x,y,0);
+  direction.normalize();
+  cout << sqrt(direction.x * direction.x + direction.y * direction.y) << endl;
+  double result = gradient.x * direction.x + gradient.y * direction.y;
+
+  cout << result << " " << result_slope << endl;
+  assert(abs(result_slope - result) < EPS);
+
   return result_slope;
 }
 
 void Slope::start_skiers(double dtime)
 {
-  double time_between_skiers = 3600 / settings::persons_hour;
-  while (time_since_last_skier >= time_between_skiers)
+  if (time_until_new_skier <= 0)
   {
+    double time_between_skiers = 3600.0 / (double)settings::persons_hour;
     Point p;
     gb.get_start_point(&p.x,&p.y);
     Skier *s = new Skier(next_skier_id,*this,p);
     next_skier_id++;
     skiers.insert(s);
-    time_since_last_skier -= time_between_skiers;
-
-    //TODO: remove following lines
-    gb.get_start_point(&p.x,&p.y);
-    s = new Skier(next_skier_id,*this,p);
-    next_skier_id++;
-    skiers.insert(s);
-    time_since_last_skier -= time_between_skiers;
-    //since here
+    time_until_new_skier = (double)rand()/(double)RAND_MAX
+                           *2*time_between_skiers;
   }
-  time_since_last_skier += dtime;
+  time_until_new_skier -= dtime;
 }
 
 void Slope::update_skiers(double dtime)
@@ -196,12 +201,14 @@ void Slope::log_skiers_situation() const
     output_file << (*skier)->get_id() <<" "<< p.x <<" "<< p.y <<" ";
     output_file.precision(6);
     output_file << p.z <<" ";
-    output_file << (*skier)->get_velocity().norm()<<" "<<endl;
+    output_file << (*skier)->get_velocity().norm()<<" ";
+    output_file << time << " " <<endl;
   }
 }
 
 void Slope::update(double dtime)
 {
+  time += dtime;
   start_skiers(dtime);
   update_skiers(dtime);
   log_skiers_situation();
@@ -220,7 +227,7 @@ double Slope::get_aspect(const Point& p) const
 //distance from left edge reporting also intersection point
 double Slope::distance_from_left(const Point& p, Point* pl) const
 {
-  double dist = gb.distance_from_left(p.x, p.y, &(pl->x), &(pl->y));;
+  double dist = gb.distance_from_left(p.x, p.y, &(pl->x), &(pl->y));
   pl->z = get_elevation(*pl);
   return dist;
 }

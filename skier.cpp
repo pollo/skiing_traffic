@@ -17,7 +17,7 @@ using namespace std;
 #include <iostream>
 #include <algorithm>
 
-#define EPS 0.000001
+#define EPS 0.00001
 #define K 0.00001
 
 Skier::Skier(int id,
@@ -67,7 +67,6 @@ Skier::Skier(int id,
   acceleration.x = 0;
   acceleration.y = 0;
   acceleration.z = 0;
-  //srand((unsigned)time(NULL));
 }
 
 //returns the inclination angle along the direction
@@ -147,6 +146,7 @@ void Skier::choose_waypoint(double dtime)
 {
   bool waypoint_valid;
   double waypoint_angle;
+  double dist_left, dist_right;
   Point left, right;
   Vector line_left, line_right;
   double alfa;
@@ -157,8 +157,8 @@ void Skier::choose_waypoint(double dtime)
   //compute waypoint angle
   waypoint_angle = (waypoint-position).angle_on_xyplane();
   //computes distances and angles
-  current_distance_from_left(&left);
-  current_distance_from_right(&right);
+  dist_left = current_distance_from_left(&left);
+  dist_right = current_distance_from_right(&right);
   line_left = left - position;
   line_right = right - position;
   angle_left = line_left.angle_on_xyplane();
@@ -189,7 +189,24 @@ void Skier::choose_waypoint(double dtime)
   if (time_since_last_waypoint > settings::time_between_waypoints ||
       !waypoint_valid)
   {
-    angle = alfa*frac + (double)rand()/(double)RAND_MAX * alfa*(1-frac*2);
+    double narrow_left = 0;
+    double narrow_right = 0;
+    //if the skier is too near the edge, narrow the angle in which the waypoint
+    //should be choosen
+    if (dist_left < settings::limit_edge_distance)
+      //narrow left is the angle under which waypoints should not be considered
+      narrow_left = acos(dist_left / settings::limit_edge_distance);
+    if (dist_right < settings::limit_edge_distance)
+      //narrow left is the angle under which waypoints should not be considered
+      narrow_right = acos(dist_right / settings::limit_edge_distance);
+    if (narrow_right + narrow_left < alfa)
+    {
+      alfa = alfa - narrow_left - narrow_right;
+      angle = alfa*frac + (double)rand()/(double)RAND_MAX * alfa*(1-frac*2);
+      angle += narrow_right;
+    }
+    else
+      angle = alfa / 2.0;
     line_right.normalize();
     line_right *= settings::distance_waypoint;
     line_right.rotate(angle);
@@ -433,7 +450,6 @@ bool Skier::fall_line_crossed() const
 
   if (turning_left)
   {
-    assert(!turning_right);
     if (aspect > 0 && aspect < M_PI)
       return (dir > aspect && dir < aspect + M_PI);
     else
@@ -441,8 +457,6 @@ bool Skier::fall_line_crossed() const
   }
   else
   {
-    assert(turning_right);
-
     if (aspect > 0 && aspect < M_PI)
       return !(dir > aspect && dir < aspect + M_PI);
     else

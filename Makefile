@@ -1,8 +1,15 @@
 CC=g++
-CFLAGS=-c -Wall
+
+#debug
+CFLAGS=-c -Wall -DDEBUG
+DEBUG=-g
+#no debug
+#CFLAGS=-c -Wall -DNDEBUG -O3
+#DEBUG=
+
 INC=-I/usr/lib/grass64/include -I/usr/include/gdal/
 LIBS=-L/usr/lib/grass64/lib -lgrass_vect -lgrass_gis
-DEBUG=-g
+
 
 all: skiing_traffic
 

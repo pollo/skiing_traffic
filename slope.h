@@ -68,8 +68,9 @@ private:
   std::set<PhysicalForce*> physical_forces;
   std::set<SocialForce*> social_forces;
   std::set<Skier*> skiers;
-  //time elapsed since the last skier started
-  double time_since_last_skier;
+  double time;
+  //time left to a new skier start
+  double time_until_new_skier;
   int next_skier_id;
 
   //stores in the point c the center point of the cell in which the p Point is
