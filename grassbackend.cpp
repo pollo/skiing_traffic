@@ -13,6 +13,7 @@
 #include <limits>
 #include <cmath>
 #include <cassert>
+#include <utility>
 
 using namespace std;
 
@@ -120,12 +121,15 @@ bool GrassBackend::open_raster(int *map,
   if (data_type)
     (*data_type) = G_raster_map_type(name.c_str(), mapset);
   *map = G_open_cell_old(name.c_str(), mapset);
+  //prepare cache for this raster map
+  if (rast_cache.size() <= (uint) *map)
+    rast_cache.resize(1 + *map);
   if (*map < 0)
     return false;
   return true;
 }
 
-double query_raster(int map, RASTER_MAP_TYPE type, double x, double y)
+double GrassBackend::query_raster(int map, RASTER_MAP_TYPE type, double x, double y) const
 {
   int row, col;
   double res;
@@ -135,26 +139,31 @@ double query_raster(int map, RASTER_MAP_TYPE type, double x, double y)
   row = (int) G_northing_to_row(y, &window);
   col = (int) G_easting_to_col(x, &window);
 
-  if (type == CELL_TYPE)
+  pair<int,int> cell(row,col);
+  if (rast_cache[map].find(cell) == rast_cache[map].end())
   {
-    //TODO: avoid memory allocation each time
-    CELL *cell = G_allocate_c_raster_buf();
-    if (G_get_c_raster_row(map, cell, row) < 0)
-      return numeric_limits<double>::quiet_NaN();
-    res = cell[col];
-    G_free(cell);
-  }
-  else
-  {
-    //TODO: avoid memory allocation each time
-    DCELL *cell = G_allocate_d_raster_buf();
+    if (type == CELL_TYPE)
+    {
+      //TODO: avoid memory allocation each time
+      CELL *cell = G_allocate_c_raster_buf();
+      if (G_get_c_raster_row(map, cell, row) < 0)
+        return numeric_limits<double>::quiet_NaN();
+      res = cell[col];
+      G_free(cell);
+    }
+    else
+    {
+      //TODO: avoid memory allocation each time
+      DCELL *cell = G_allocate_d_raster_buf();
 
-    if (G_get_d_raster_row(map, cell, row) < 0)
-      return numeric_limits<double>::quiet_NaN();
-    res = cell[col];
-    G_free(cell);
+      if (G_get_d_raster_row(map, cell, row) < 0)
+        return numeric_limits<double>::quiet_NaN();
+      res = cell[col];
+      G_free(cell);
+    }
+    rast_cache[map][cell] = res;
   }
-  return res;
+  return rast_cache[map][cell];
 }
 
 double GrassBackend::get_elevation(double x, double y) const

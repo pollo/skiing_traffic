@@ -96,15 +96,10 @@ double Slope::get_elevation(const Point& p) const
 double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
 {
   double x, y;
-  double slope, aspect, result_slope;
-  double angle_line_points, angle_horizontal_linepoints;
-  //the slope and the aspect are considered the same from p1 to p2
-  //values of p1 are taken
+  double slope, aspect;
+
   aspect = get_aspect(p1);
   slope = get_slope(p1);
-
-  //cout << "aspect " << aspect/settings::degree_to_radians << endl;
-  //cout << "slope " << slope/settings::degree_to_radians << endl;
 
   if (isnan(aspect) || isnan(slope))
     return numeric_limits<double>::quiet_NaN();
@@ -116,18 +111,27 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
   if (abs(x) < EPS && abs(y) < EPS)
     return 0;
 
+  //compute gradient vector
+  double gradient_len = tan(slope);
+  Vector gradient(gradient_len * cos(aspect + M_PI),
+                  gradient_len * sin(aspect + M_PI));
+  //compute direction
+  Vector direction(x,y,0);
+  direction.normalize();
+  //the directional derivative is the scalar product beetwen gradient and dir
+  double result = atan(gradient.x * direction.x + gradient.y * direction.y);
+
+  #ifdef DEBUG
+  double result_slope;
+  double angle_line_points, angle_horizontal_linepoints;
+
+  //the slope and the aspect are considered the same from p1 to p2
+  //values of p1 are taken
+
   //compute the angle beetween the line parallel to the x direction passing
   //through p1 and the line from p1 to p2
-/*  if (abs(x) < EPS)
-    //avoid division by small x: the angle is pi/2 or -pi/2 depending on y
-    angle_line_points = (y>0 ? M_PI / 2.0 : M_PI * 3.0/2.0);
-    else*/
-  //atan is between pi/2 and -pi/2, if in 2 or 3 quadrant add pi to correct
-  //tha angle
   angle_line_points = atan(y/x) + (x<0 ? M_PI : 0) +
     (x>0 && y<0 ? 2 * M_PI : 0);
-
-  //cout << "angle line points " << angle_line_points/settings::degree_to_radians << endl;
 
   //compute angle between horizontal and the line trough the points
   //angle_horizontal_linepoints =  angle_line_points - (aspect - M_PI / 2.0);
@@ -148,17 +152,10 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
   //compute the slope from p1 to p2
   result_slope = asin( sin(slope) * sin(angle_horizontal_linepoints));
 
-  double radius = tan(slope);
-  Vector gradient(radius * cos(aspect + M_PI), radius * sin(aspect + M_PI));
-  Vector direction(x,y,0);
-  direction.normalize();
-  cout << sqrt(direction.x * direction.x + direction.y * direction.y) << endl;
-  double result = gradient.x * direction.x + gradient.y * direction.y;
-
-  cout << result << " " << result_slope << endl;
   assert(abs(result_slope - result) < EPS);
+  #endif
 
-  return result_slope;
+  return result;
 }
 
 void Slope::start_skiers(double dtime)

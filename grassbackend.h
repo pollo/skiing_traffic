@@ -22,6 +22,9 @@ extern "C" {
 #endif
 
 #include <string>
+#include <map>
+#include <vector>
+#include <utility>
 #include "gisbackend.h"
 
 class GrassBackend : public GisBackend {
@@ -92,11 +95,14 @@ public:
   //structures supporting distance computation
   line_pnts *line_right;
   line_pnts *line_left;
+  //cache raster map result
+  mutable std::vector< std::map< std::pair<int,int>, double> > rast_cache;
 
   bool open_vector(Map_info *map, const std::string name) const;
   bool open_raster(int *map,
                    RASTER_MAP_TYPE *data_type,
                    const std::string name) const;
+  double query_raster(int map, RASTER_MAP_TYPE type, double x, double y) const;
 };
 
 #endif /* GRASSBACKEND_H */
