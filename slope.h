@@ -72,6 +72,8 @@ private:
   //time left to a new skier start
   double time_until_new_skier;
   int next_skier_id;
+  //regulate when to log
+  int log;
 
   //stores in the point c the center point of the cell in which the p Point is
   void get_cell_center(const Point& p,

@@ -40,6 +40,7 @@ struct settings {
   static const double limit_angle_waypoint;
   static const double dtime;
   static const double limit_edge_distance;
+  static const int log_freq;
 #ifdef DEBUG
   static std::ofstream& rep() {
     static std::ofstream output;

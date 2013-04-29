@@ -20,7 +20,8 @@ using namespace std;
 
 Slope::Slope(const GisBackend& gb,
              std::ofstream &output_file) :
-  gb(gb), output_file(output_file), time_until_new_skier(0), next_skier_id(1)
+  gb(gb), output_file(output_file), time_until_new_skier(0), next_skier_id(1),
+  log(settings::log_freq)
 {
   PhysicalForce *pf;
   SocialForce *sf;
@@ -208,7 +209,11 @@ void Slope::update(double dtime)
   time += dtime;
   start_skiers(dtime);
   update_skiers(dtime);
-  log_skiers_situation();
+  if (log-- == 0)
+  {
+    log = settings::log_freq;
+    log_skiers_situation();
+  }
 }
 
 double Slope::get_slope(const Point& p) const
