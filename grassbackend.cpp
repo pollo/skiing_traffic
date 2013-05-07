@@ -47,10 +47,10 @@ GrassBackend::GrassBackend (string ski_slope_name,
   string mapset;
   //open ski slope map
   if (!open_vector(&ski_slope,ski_slope_name))
-    throw domain_error("Ski slope map "+elevation_name+" not found");
+    throw domain_error("Ski slope map "+ski_slope_name+" not found");
   //check ski slope map
   if (Vect_get_num_areas(&ski_slope) != 1)
-    throw domain_error("Ski slope map "+elevation_name+\
+    throw domain_error("Ski slope map "+ski_slope_name+\
                        " must have a single feature of type AREA");
   //open start area map
   if (!open_vector(&start_area,start_area_name))

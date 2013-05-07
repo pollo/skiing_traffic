@@ -33,7 +33,7 @@ struct settings {
   static const double directional_deviation; //degree
   static const double angle_view; //degree
   static const double stop_turning;
-  static const double time_between_waypoints;
+  static const double space_between_waypoints;
   //distance between the skier position and the waypoint that should be choosen
   static const double distance_waypoint;
   static const double waypoint_force_strength;
@@ -41,6 +41,8 @@ struct settings {
   static const double dtime;
   static const double limit_edge_distance;
   static const int log_freq;
+  static const double initial_vel;
+
 #ifdef DEBUG
   static std::ofstream& rep() {
     static std::ofstream output;
@@ -78,6 +80,27 @@ struct settings {
       output << "x y force norm ad ae " << std::endl;
       output.precision(13);
     }
+    return output;
+  }
+
+  static std::ofstream& waypoints() {
+    static std::ofstream output;
+    static bool t = true;
+    static int id = 1;
+    static int c = 0;
+    if (t)
+    {
+      t = false;
+      output.open("/tmp/waypoints.csv");
+      output << "id x y " << std::endl;
+      output.precision(13);
+    }
+    output << id << " ";
+    if (c==4)
+    {
+      id ++;
+    }
+    c = (c+1)%5;
     return output;
   }
 #endif

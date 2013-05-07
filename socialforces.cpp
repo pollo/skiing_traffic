@@ -49,6 +49,7 @@ Vector LeftForce::apply(const Skier& skier)
   distance *= U/Rl * exp(-norm/Rl)/norm;
   #ifdef DEBUG
   settings::left() << skier.get_position().x << " " << skier.get_position().y << " (" << distance.x <<","<<distance.y<<","<<distance.z<<") "<<distance.norm()<< " " << skier.get_direction().angle_on_xyplane()/settings::degree_to_radians << " " << (-1*distance).angle_on_xyplane()/settings::degree_to_radians << " " << endl;
+  settings::left() << intersection.x << " " << intersection.y <<endl;
   #endif
 //(skier.get_direction()/skier.get_direction().norm()) * (distance/distance.norm()) << " " << skier.get_direction().norm()*distance.norm() << " " << endl;
   distance *= visible(skier.get_direction(),-1*distance);
@@ -70,6 +71,7 @@ Vector RightForce::apply(const Skier& skier)
   distance *= visible(skier.get_direction(),-1*distance);
   #ifdef DEBUG
   settings::right() << skier.get_position().x << " " << skier.get_position().y << " (" << distance.x <<","<<distance.y<<","<<distance.z<<") "<<distance.norm()<< " " << endl;
+  settings::right() << intersection.x << " " << intersection.y <<endl;
   #endif
   return distance;
 }

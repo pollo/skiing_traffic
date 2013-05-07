@@ -58,7 +58,7 @@ private:
   Vector acceleration;
   double mass;
   bool turning_right, turning_left;
-  double time_since_last_waypoint;
+  double meters_since_last_waypoint;
   Point waypoint;
 
   //updates the position of the skier using the Vector velocity

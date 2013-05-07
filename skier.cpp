@@ -28,7 +28,7 @@ Skier::Skier(int id,
              const Vector &acceleration):
   id(id), slope(slope), position(position), direction(direction),
   velocity(velocity), acceleration(acceleration),
-  mass(settings::average_mass), time_since_last_waypoint(0)
+  mass(settings::average_mass), meters_since_last_waypoint(0)
 {
   //the skier is not allowed to fly
   (this->position.z) = get_current_elevation();
@@ -41,7 +41,7 @@ Skier::Skier(int id,
              const Slope& sl,
              const Point &position) :
   id(id), slope(sl), position(position), mass(settings::average_mass),
-  turning_right(false), turning_left(false), time_since_last_waypoint(0)
+  turning_right(false), turning_left(false), meters_since_last_waypoint(0)
 {
   double slope, aspect;
   slope = get_current_slope();
@@ -61,8 +61,8 @@ Skier::Skier(int id,
   //velocity.x = 0;
   //velocity.y = 0;
   //velocity.z = 0;
-  //initial velocity is 1 (equal to direction)
-  velocity = direction;
+  //initial velocity is settings::initial_vel (equal to direction)
+  velocity = direction * settings::initial_vel;
   //initial acceleration is 0
   acceleration.x = 0;
   acceleration.y = 0;
@@ -145,77 +145,85 @@ void Skier::decide_turn()
 void Skier::choose_waypoint(double dtime)
 {
   bool waypoint_valid;
-  double waypoint_angle;
   double dist_left, dist_right;
   Point left, right;
-  Vector line_left, line_right;
+  Vector line_left, line_right, line_midle, line_waypoint;
   double alfa;
-  double angle;
-  double angle_right, angle_left;
+  double angle, angle_waypoint;
   double frac = settings::limit_angle_waypoint;
-  time_since_last_waypoint += dtime;
-  //compute waypoint angle
-  waypoint_angle = (waypoint-position).angle_on_xyplane();
   //computes distances and angles
   dist_left = current_distance_from_left(&left);
   dist_right = current_distance_from_right(&right);
   line_left = left - position;
+  line_left.z = 0;
+  line_left.normalize();
   line_right = right - position;
-  angle_left = line_left.angle_on_xyplane();
-  angle_right = line_right.angle_on_xyplane();
+  line_right.z = 0;
+  line_right.normalize();
+  line_waypoint = waypoint - position;
+  line_waypoint.z = 0;
+  line_waypoint.normalize();
+  //if the skier is too near the edge avoid to choose waypoint that can make
+  //the skier collide with the ege
+  if (dist_left < settings::limit_edge_distance)
+  {
+    //narrow left is the angle under which waypoints should not be considered
+    double narrow_left = acos(dist_left / settings::limit_edge_distance);
+    line_left.rotate(-narrow_left);
+  }
+  if (dist_right < settings::limit_edge_distance)
+  {
+    //narrow right is the angle under which waypoints should not be considered
+    double narrow_right = acos(dist_right / settings::limit_edge_distance);
+    line_right.rotate(narrow_right);
+  }
   //compute alfa angle between right line and left_line
+  double angle_right = line_right.angle_on_xyplane();
+  double angle_left = line_left.angle_on_xyplane();
   if (angle_right < angle_left)
   {
     alfa = angle_left - angle_right;
-    waypoint_valid = (waypoint_angle > angle_right + alfa*frac &&
-                      waypoint_angle < angle_right + alfa*(1-frac));
   }
   else
   {
     alfa = 2*M_PI - (angle_right - angle_left);
-    if (angle_right + alfa*frac > 2*M_PI)
-      waypoint_valid = (waypoint_angle > angle_right + alfa*frac - 2*M_PI &&
-                      waypoint_angle < angle_right + alfa*(1-frac) - 2*M_PI);
-    else
-    {
-      if (angle_right + alfa*(1-frac) > 2*M_PI)
-        waypoint_valid = (waypoint_angle > angle_right + alfa*frac ||
-                          waypoint_angle < angle_right + alfa*(1-frac) - 2*M_PI);
-      else
-        waypoint_valid = (waypoint_angle > angle_right + alfa*frac &&
-                          waypoint_angle < angle_right + alfa*(1-frac));
-    }
   }
-  if (time_since_last_waypoint > settings::time_between_waypoints ||
+
+  //compute line between the left bound and the right bound
+  line_midle = line_right;
+  line_midle.rotate(alfa/2.0);
+
+  //the old waypoint is valid if the angle between the midle line
+  //and the waypoint line is less then alfa/2.0
+  angle_waypoint = acos(line_midle.x * line_waypoint.x +
+                        line_midle.y * line_waypoint.y);
+
+  waypoint_valid = (angle_waypoint < alfa/2.0
+                    && slope.is_inside_slope(waypoint));
+
+  if (meters_since_last_waypoint > settings::space_between_waypoints ||
       !waypoint_valid)
   {
-    double narrow_left = 0;
-    double narrow_right = 0;
-    //if the skier is too near the edge, narrow the angle in which the waypoint
-    //should be choosen
-    if (dist_left < settings::limit_edge_distance)
-      //narrow left is the angle under which waypoints should not be considered
-      narrow_left = acos(dist_left / settings::limit_edge_distance);
-    if (dist_right < settings::limit_edge_distance)
-      //narrow left is the angle under which waypoints should not be considered
-      narrow_right = acos(dist_right / settings::limit_edge_distance);
-    if (narrow_right + narrow_left < alfa)
-    {
-      alfa = alfa - narrow_left - narrow_right;
-      angle = alfa*frac + (double)rand()/(double)RAND_MAX * alfa*(1-frac*2);
-      angle += narrow_right;
-    }
-    else
-      angle = alfa / 2.0;
-    line_right.normalize();
-    line_right *= settings::distance_waypoint;
-    line_right.rotate(angle);
-    waypoint = position + line_right;
+    //narrow the acceptable angle
+    alfa *= (1-frac);
+
+    //choose a random angle for the waypoint
+    angle = (double)rand()/(double)RAND_MAX * alfa;
+    angle -= alfa/2.0;
+
+    settings::waypoints() << position.x + line_midle.x << " " << position.y + line_midle.y << " " << endl;
+
+    line_midle *= settings::distance_waypoint;
+    line_midle.rotate(angle);
+    waypoint = position + line_midle;
     waypoint.z = slope.get_elevation(waypoint);
-    //cerr << position.x << " " << position.y << " " << position.z << " "
-    //     << angle_right/settings::degree_to_radians << " " << angle_left/settings::degree_to_radians << " " << angle << " " <<endl;
-    //cerr << waypoint.x << " " << waypoint.y << " " << waypoint.z << " 0 0 0 "<< endl;
-    time_since_last_waypoint = 0;
+    #ifdef DEBUG
+    settings::waypoints() << position.x << " " << position.y << " " << endl;
+    settings::waypoints() << waypoint.x << " " << waypoint.y << " " << endl;
+    settings::waypoints() << position.x + line_right.x << " " << position.y + line_right.y << " " << endl;
+    settings::waypoints() << position.x + line_left.x << " " << position.y + line_left.y << " " << endl;
+    #endif
+    meters_since_last_waypoint = 0;
   }
 }
 
@@ -230,17 +238,8 @@ void Skier::update(double dtime)
 {
   bool cell_border_reached = false;
   double time_to_reach_border;
-  //cout << "dtime " << dtime << endl;
   //moves skier for dtime or until the cell border is reached
   cell_border_reached = update_position(dtime, &time_to_reach_border);
-  cerr.precision(13);
-  /*cerr << position.x << " " << position.y <<" " << position.z << " (" << velocity.x
-       <<","<< velocity.y <<","<< velocity.z<<") " << velocity.norm()<<" ("<<acceleration.x
-       <<","<<acceleration.y<<","<<acceleration.z<<") "
-       << (turning_left ? 1 : (turning_right ? 2 : 0)) << " " << endl;*/
-  //cout << "inclination angle " << get_current_inclination_angle() << endl;
-  //cout << "position" << endl;
-  //cout << position;
   if (cell_border_reached)
   {
     //adjust direction to have inclination angle of the plane
@@ -248,25 +247,16 @@ void Skier::update(double dtime)
     direction.rotate_axis_xy(direction.inclination_angle() -
                              get_current_inclination_angle());
   }
-  //cout << "direction" << endl;
-  //cout << direction;
-  //cout << direction.inclination_angle() << endl;
-  //computes acceleration
   update_acceleration();
-  //cout << "acceleration" << endl;
-  //cout << acceleration;
-  //cout << acceleration.inclination_angle() << endl;
   //if the cell border is reached update velocity only for the time used
   if (cell_border_reached)
     update_velocity(time_to_reach_border, true);
   else
     update_velocity(dtime, false);
   update_direction();
-  //cout << "velocity" << endl;
-  //cout << velocity;
-  //cout << velocity.inclination_angle() << endl;
   if (velocity.norm() > 0 )
     assert(abs(velocity.inclination_angle()-get_current_inclination_angle())<EPS);
+
   if (cell_border_reached)
     update(dtime-time_to_reach_border);
   choose_waypoint(dtime);
@@ -380,6 +370,7 @@ bool Skier::update_position(double dtime, double* time_to_reach_border)
     //adjust elevation
     d.z = elev;
   }
+  meters_since_last_waypoint += (d-position).norm();
   if (!slope.is_inside_slope(d))
   {
     reflect_edge(d);
