@@ -42,6 +42,11 @@ struct settings {
   static const double limit_edge_distance;
   static const int log_freq;
   static const double initial_vel;
+  static const double small_slope;
+  static const double distance_to_check_slope;
+  static const double vel_max;
+  static const double slow_simulation;
+  static const double skidding_factor;
 
 #ifdef DEBUG
   static std::ofstream& rep() {

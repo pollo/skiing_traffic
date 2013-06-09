@@ -25,10 +25,14 @@ Skier::Skier(int id,
              const Vector &position,
              const Vector &direction,
              const Vector &velocity,
-             const Vector &acceleration):
+             const Vector &acceleration,
+             double mass,
+             double turning_radius,
+             double skidding_factor):
   id(id), slope(slope), position(position), direction(direction),
   velocity(velocity), acceleration(acceleration),
-  mass(settings::average_mass), meters_since_last_waypoint(0)
+  mass(mass), meters_since_last_waypoint(0),
+  turning_radius(turning_radius), skidding_factor(skidding_factor)
 {
   //the skier is not allowed to fly
   (this->position.z) = get_current_elevation();
@@ -39,9 +43,13 @@ Skier::Skier(int id,
 
 Skier::Skier(int id,
              const Slope& sl,
-             const Point &position) :
-  id(id), slope(sl), position(position), mass(settings::average_mass),
-  turning_right(false), turning_left(false), meters_since_last_waypoint(0)
+             const Point &position,
+             double mass,
+             double turning_radius,
+             double skidding_factor) :
+  id(id), slope(sl), position(position), mass(mass),
+  turning_right(false), turning_left(false), meters_since_last_waypoint(0),
+  turning_radius(turning_radius), skidding_factor(skidding_factor)
 {
   double slope, aspect;
   slope = get_current_slope();
@@ -150,7 +158,7 @@ void Skier::choose_waypoint(double dtime)
   Vector line_left, line_right, line_midle, line_waypoint;
   double alfa;
   double angle, angle_waypoint;
-  double frac = settings::limit_angle_waypoint;
+  //double frac = settings::limit_angle_waypoint;
   //computes distances and angles
   dist_left = current_distance_from_left(&left);
   dist_right = current_distance_from_right(&right);
@@ -205,13 +213,28 @@ void Skier::choose_waypoint(double dtime)
       !waypoint_valid)
   {
     //narrow the acceptable angle
-    alfa *= (1-frac);
+    //alfa *= (1-frac);
+    alfa *= velocity.norm() / settings::vel_max;
+
+    #ifdef DEBUG
+    settings::waypoints() << position.x + line_midle.x << " " << position.y + line_midle.y << " " << endl;
+    #endif
+
+    Vector check_slope = position+line_midle*settings::distance_to_check_slope;
+    if (slope.is_inside_slope(check_slope))
+    {
+      double next_slope = slope.get_slope(check_slope);
+      //if in the next meters there there is a small slope
+      if (next_slope < settings::small_slope)
+      {
+        //narrow the acceptable angle to increase the speed
+        alfa *= next_slope/settings::small_slope;
+      }
+    }
 
     //choose a random angle for the waypoint
     angle = (double)rand()/(double)RAND_MAX * alfa;
     angle -= alfa/2.0;
-
-    settings::waypoints() << position.x + line_midle.x << " " << position.y + line_midle.y << " " << endl;
 
     line_midle *= settings::distance_waypoint;
     line_midle.rotate(angle);

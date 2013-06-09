@@ -28,6 +28,7 @@ public:
 class DownhillForce : public PhysicalForce {
 public:
   Vector apply(const Skier& skier);
+  Vector apply_without_skidding(const Skier& skier);
 
   ~DownhillForce() { }
 };

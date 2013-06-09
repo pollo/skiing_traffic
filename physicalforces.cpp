@@ -9,12 +9,14 @@
 #include "parameters.h"
 #include <cmath>
 #include <cassert>
+#include <cstdlib>
 
 using namespace std;
 
-#define EPS 0.00000001
+#define EPS 0.0000001
 
-Vector DownhillForce::apply(const Skier& skier)
+
+Vector downhill_force(const Skier& skier)
 {
   Vector force;
   const double g = settings::g;
@@ -22,12 +24,23 @@ Vector DownhillForce::apply(const Skier& skier)
   //in the following formula the angle is considered positive even if the
   //direction of motion is downhill
   angle *= -1;
-  //fp = mg (sin γ) er
-  force = skier.get_mass() * g * sin(angle) * skier.get_direction();
-  //cout << "downhill " << skier.get_direction().inclination_angle() << " " << force.inclination_angle() << endl;
-  //cout << force.inclination_angle() << " " << skier.get_current_inclination_angle() << endl;
+  //fp = mg (sin γ)
+  force =  skier.get_mass() * g * sin(angle) * skier.get_direction();
   assert(abs(abs(force.inclination_angle()) - abs(skier.get_current_inclination_angle())) < EPS);
   return force;
+}
+
+Vector DownhillForce::apply(const Skier& skier)
+{
+  if (skier.turning())
+    return (1-skier.get_skidding_factor()) * downhill_force(skier);
+  else
+    return downhill_force(skier);
+}
+
+Vector DownhillForce::apply_without_skidding(const Skier& skier)
+{
+  return downhill_force(skier);
 }
 
 Vector CentripetalForce::apply(const Skier& skier)
@@ -39,10 +52,10 @@ Vector CentripetalForce::apply(const Skier& skier)
   else
   {
     DownhillForce fp;
-    const double rsc = settings::sidecut_radius;
+    const double rsc = skier.get_turning_radius();
     double m = skier.get_mass();
     double r = (skier.get_velocity()).norm();
-    Vector f_lat = fall_line_force(skier) - fp.apply(skier);
+    Vector f_lat = fall_line_force(skier) - fp.apply_without_skidding(skier);
     //cout << fall_line_force(skier) << " " << fp.apply(skier) <<endl;
     //cout << "-------------" << endl;
     //cout << fall_line_force(skier).angle_on_xyplane() << " " << fp.apply(skier).angle_on_xyplane() <<endl;
@@ -121,7 +134,7 @@ Vector lat_force(const Skier& skier)
   DownhillForce fp;
   if (!skier.turning())
   {
-    return fall_line_force(skier) - fp.apply(skier);
+    return fall_line_force(skier) - fp.apply_without_skidding(skier);
   }
   else
   {

@@ -214,6 +214,7 @@ void Slope::update(double dtime)
     log = settings::log_freq;
     log_skiers_situation();
   }
+  usleep(settings::slow_simulation);
 }
 
 double Slope::get_slope(const Point& p) const
