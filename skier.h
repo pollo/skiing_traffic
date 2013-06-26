@@ -1,7 +1,8 @@
 /*
- * File:   skier.h
  *
- * The class Skier
+ * Class Skier, models a single skier: update methods moves the skiers
+ * according to physical and social forces
+ *
  */
 
 #ifndef SKIER_H

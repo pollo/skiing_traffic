@@ -1,7 +1,6 @@
 /*
- * File:   slope.cpp
  *
- * Slope implementation
+ * Slope methods definition
  *
  */
 
@@ -72,15 +71,11 @@ double Slope::get_elevation(const Point& p) const
   double x, y, dist, delev;
   get_cell_center(p,&center);
 
-  //cout << "center" << endl <<center;
-
   x = p.x - center.x;
   y = p.y - center.y;
 
   dist = sqrt(x*x+y*y);
   slope_center_point = get_slope_from_p1_to_p2(center,p);
-
-  //cout << "slope centro punto " << slope_center_point/settings::degree_to_radians << endl;
 
   //delta elevation from the center to the point
   if (isnan(slope_center_point))
@@ -121,40 +116,6 @@ double Slope::get_slope_from_p1_to_p2(const Point& p1, const Point& p2) const
   direction.normalize();
   //the directional derivative is the scalar product beetwen gradient and dir
   double result = atan(gradient.x * direction.x + gradient.y * direction.y);
-
-  #ifdef DEBUG
-  double result_slope;
-  double angle_line_points, angle_horizontal_linepoints;
-
-  //the slope and the aspect are considered the same from p1 to p2
-  //values of p1 are taken
-
-  //compute the angle beetween the line parallel to the x direction passing
-  //through p1 and the line from p1 to p2
-  angle_line_points = atan(y/x) + (x<0 ? M_PI : 0) +
-    (x>0 && y<0 ? 2 * M_PI : 0);
-
-  //compute angle between horizontal and the line trough the points
-  //angle_horizontal_linepoints =  angle_line_points - (aspect - M_PI / 2.0);
-  angle_horizontal_linepoints = aspect - M_PI / 2.0 - angle_line_points;
-
-  if (angle_horizontal_linepoints < 0)
-    angle_horizontal_linepoints += 2 * M_PI;
-
-  double sign = 1;
-  if (angle_horizontal_linepoints > M_PI/2 &&
-      angle_horizontal_linepoints < 3.0/2.0*M_PI)
-    sign = -1;
-
-  //consider the angle liyng on the plane
-  angle_horizontal_linepoints = atan(tan(angle_horizontal_linepoints)/cos(slope))
-                              * sign;
-
-  //compute the slope from p1 to p2
-  result_slope = asin( sin(slope) * sin(angle_horizontal_linepoints));
-
-  assert(abs(result_slope - result) < EPS);
-  #endif
 
   return result;
 }

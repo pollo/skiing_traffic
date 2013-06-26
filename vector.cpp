@@ -1,3 +1,9 @@
+/*
+ *
+ * Methods implementation for class Vector
+ *
+ */
+
 #include "vector.h"
 #include "parameters.h"
 #include <cmath>

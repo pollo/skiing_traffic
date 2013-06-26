@@ -1,7 +1,8 @@
 /*
- * File:   vector.h
  *
- * The class Vector
+ * The class Vector models physical vectors with x, y, z dimensions.
+ * Class Point is just an alias for Vector.
+ *
  */
 
 #ifndef VECTOR_H

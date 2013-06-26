@@ -1,5 +1,4 @@
 /*
- * File:   slope.h
  *
  * The class Slope represent the ski slope on which the simulation is run.
  * It exposes methods to:
