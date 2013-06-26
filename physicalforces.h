@@ -1,5 +1,4 @@
 /*
- * File:   physicalforce.h
  *
  * The class Physicalforce is the abstract base class for all those
  * phsicalforces that need to be instantiated inside the simulation.
@@ -9,6 +8,7 @@
  * but are used only to compute the other forces are modelled by functions
  * that take a skier as input and returns the Vector force applied to the
  * skier.
+ *
  */
 
 #ifndef PHYSICALFORCE_H

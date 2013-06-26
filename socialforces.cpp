@@ -1,5 +1,4 @@
 /*
- * File:   socialforces.cpp
  *
  * Defines the social forces acting on a skier
  *
@@ -28,6 +27,7 @@ int visible(const Vector& u, const Vector& v)
   }
 }
 
+//F_D
 Vector DestinationForce::apply(const Skier& skier)
 {
   Vector force = skier.get_waypoint() - skier.get_position();
@@ -35,6 +35,7 @@ Vector DestinationForce::apply(const Skier& skier)
   return settings::waypoint_force_strength * force;
 }
 
+//F_L
 Vector LeftForce::apply(const Skier& skier)
 {
   Vector intersection;
@@ -47,15 +48,11 @@ Vector LeftForce::apply(const Skier& skier)
   distance = skier.get_position() - intersection;
   norm = distance.norm();
   distance *= U/Rl * exp(-norm/Rl)/norm;
-  #ifdef DEBUG
-  settings::left() << skier.get_position().x << " " << skier.get_position().y << " (" << distance.x <<","<<distance.y<<","<<distance.z<<") "<<distance.norm()<< " " << skier.get_direction().angle_on_xyplane()/settings::degree_to_radians << " " << (-1*distance).angle_on_xyplane()/settings::degree_to_radians << " " << endl;
-  settings::left() << intersection.x << " " << intersection.y <<endl;
-  #endif
-//(skier.get_direction()/skier.get_direction().norm()) * (distance/distance.norm()) << " " << skier.get_direction().norm()*distance.norm() << " " << endl;
   distance *= visible(skier.get_direction(),-1*distance);
   return distance;
 }
 
+//F_R
 Vector RightForce::apply(const Skier& skier)
 {
   Vector intersection;
@@ -69,13 +66,10 @@ Vector RightForce::apply(const Skier& skier)
   norm = distance.norm();
   distance *= U/Rr * exp(-norm/Rr)/norm;
   distance *= visible(skier.get_direction(),-1*distance);
-  #ifdef DEBUG
-  settings::right() << skier.get_position().x << " " << skier.get_position().y << " (" << distance.x <<","<<distance.y<<","<<distance.z<<") "<<distance.norm()<< " " << endl;
-  settings::right() << intersection.x << " " << intersection.y <<endl;
-  #endif
   return distance;
 }
 
+//F_S
 Vector SkiersForce::apply(const Skier& skier)
 {
   double dtime = settings::dtime;
@@ -99,13 +93,8 @@ Vector SkiersForce::apply(const Skier& skier)
       Vector f_ab = 0.25 * V/Ra * exp(-s/Ra) * 1/s *
                     (r_ab_norm + rab_vb_dtime_norm) *
                     (r_ab/r_ab_norm + rab_vb_dtime/rab_vb_dtime_norm);
-      //cout << "skier repulsion"<< endl;
-      //cout << r_ab;
       force += f_ab * visible(skier.get_direction(),-1*f_ab);
     }
   }
-  #ifdef DEBUG
-  settings::rep() << skier.get_position().x << " " << skier.get_position().y << " (" << force.x <<","<<force.y<<","<<force.z<<") "<<force.norm()<< " " << endl;
-  #endif
   return force;
 }

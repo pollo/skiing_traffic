@@ -1,7 +1,8 @@
 /*
- * File:   socialforce.h
+ * The class SocialForce is the abstract base class for all the
+ * socialforces. These should have the method apply wich returns the
+ * Vector force resultat by applying the force to the skier.
  *
- * The class Socialforce
  */
 
 #ifndef SOCIALFORCE_H
