@@ -1,12 +1,8 @@
 /*
- * File:   GrassBackend.h
  *
  * Declares the interface for the Grass backend that can be use to perform
- * the simulation.
- * Three map are used:
- * -ski_slope: vectorial map with the geometry of the ski slope
- * -elevation: raster map with the elevation data
- * -slope: raster map with the slope data
+ * the simulation. It implements the GisBackend interface.
+ *
  */
 
 #ifndef GRASSBACKEND_H
@@ -29,14 +25,23 @@ extern "C" {
 
 class GrassBackend : public GisBackend {
 public:
-  GrassBackend(std::string ski_slope_name,
-               std::string right_edge,
-               std::string left_edge,
-               std::string start_area_name,
-               std::string stop_area_name,
-               std::string elevation_name,
-               std::string slope_name,
-               std::string aspect_name);
+  GrassBackend(
+    //vector map with slope polygon
+    std::string ski_slope_name,
+    //vector map with right edge line
+    std::string right_edge,
+    //vector map with left edge line
+    std::string left_edge,
+    //vector map with start area polygon
+    std::string start_area_name,
+    //vector map with stop area polygon
+    std::string stop_area_name,
+    //raster elevation map
+    std::string elevation_name,
+    //raster slope map
+    std::string slope_name,
+    //raster aspect map
+    std::string aspect_name);
   ~GrassBackend();
 
   //returns the elevation value at the coordinates x y
@@ -73,6 +78,8 @@ public:
                       double *east, double *west,
                       double *north, double *sud) const;
 
+  //Returns the intersection point of the line (sx,sy)(dx,dy) with the slope
+  //edge and the angle that it forms with the perpendicular to the edge
   bool reflect_line(double sx, double sy, double dx, double dy,
                     double *px, double *py, double *angle) const;
 

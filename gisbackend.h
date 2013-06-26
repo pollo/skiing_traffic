@@ -1,5 +1,4 @@
 /*
- * File:   gisbackend.h
  *
  * Declares an Interface for the Gis Backend needed by the model.
  *
@@ -33,6 +32,7 @@ public:
   virtual void get_cell_center(double x, double y,
                                double *cx, double *cy) const = 0;
 
+  //returns the cell limiting coordinates
   virtual void get_cell_bound(double x, double y,
                               double *east, double *west,
                               double *north, double *sud) const = 0;

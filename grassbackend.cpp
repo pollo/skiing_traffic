@@ -1,5 +1,4 @@
 /*
- * File:   GrassBackend.cpp
  *
  * Defines the Grass Backend implementation.
  * Core Grass libraries are used to handle spatial data and performs spatial
@@ -33,8 +32,8 @@ line_pnts* read_vector_line(Map_info& map)
   return line;
 }
 
-//Opens the ski slope, elevation and slope maps.
-//if an error occurs throws a domain_error exception
+//Opens the maps.
+//If an error occurs throws a domain_error exception
 GrassBackend::GrassBackend (string ski_slope_name,
                             string right_edge_name,
                             string left_edge_name,
@@ -350,7 +349,7 @@ bool GrassBackend::reflect_line(double sx, double sy, double dx, double dy,
   {
     double degree_to_radians =  M_PI/180.0;
     int n = 1;
-    //if integration time and slope edge are reasonable there should be 
+    //if integration time and slope edge are reasonable there should be
     //only one intersection point
     assert(intersection->n_points == 1);
     Vect_copy_pnts_to_xyz(intersection,px,py,NULL,&n);

@@ -72,3 +72,4 @@ const double settings::dtime = 0.01; //seconds
 const int settings::log_freq = 10;
 //slow computation to view simulation in qgis
 const double settings::slow_simulation = 5;
+const char* settings::output_file_path = "/tmp/simulation.csv";

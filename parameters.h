@@ -42,6 +42,7 @@ struct settings {
   static const double vel_high;
   static const double slow_simulation;
   static const double skidding_factor;
+  static const char* output_file_path;
 };
 
 #endif /* PARAMETERS_H */

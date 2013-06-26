@@ -1,8 +1,7 @@
 /*
- * File:   main.cpp
- * Author: pollo
  *
- * Created on March 2, 2013, 12:08 PM
+ * Main file, handle command line parameters and runs the simulation
+ *
  */
 
 #ifdef __cplusplus
@@ -44,86 +43,9 @@ Option* decl_rast(const char* key,const char* description)
   return opt;
 }
 
-void test_gb(Slope& sl)
-{
-  cout << "x y elevation slope aspect left right inside center" << endl;
-  for (int i=0; i<500; i++)
-  {
-    double f,fmax,fmin;
-    Point p;
-    Point c;
-    f = (double)rand() / RAND_MAX;
-    fmin = 695548.00;
-    fmax = 696552.00;
-    p.x = fmin + f * (fmax - fmin);
-    f = (double)rand() / RAND_MAX;
-    fmin = 5135266.00;
-    fmax = 5135270.00;
-    p.y = fmin + f * (fmax - fmin);
-    cout.precision(10);
-    cout << p.x << " " << p.y << " ";
-    cout << sl.get_elevation(p) << " ";
-    cout <<  sl.get_slope(p) << " ";
-    cout  <<  sl.get_aspect(p) << " ";
-    cout << sl.distance_from_left(p);
-    cout << " " <<  sl.distance_from_right(p) << " ";
-    cout <<  sl.is_inside_slope(p) << " ";
-//    sl.get_cell_center(p,&p);
-//    cout << "(" << p.x << "," << p.y << "," << p.z << ") ";
-    cout << endl;
-  }
-}
-
-void test_elevation(Slope& sl)
-{
-  cout << "id x y elevation" << endl;
-  for (int i=0; i<10000; i++)
-  {
-    double f,fmax,fmin;
-    Point p;
-    Point c;
-    f = (double)rand() / RAND_MAX;
-    //fmin = 695549.00;
-    //fmax = 695551.00;
-    //vero
-    fmin = 695512.73;
-    fmax = 696567.64;
-    //finto
-    //fmin = 678550.020811;
-    //fmax = 678559.989453;
-    p.x = fmin + f * (fmax - fmin);
-    f = (double)rand() / RAND_MAX;
-    //vero
-    //fmin = 5135267.00;
-    //fmax = 5135268.00;
-    fmin = 5134497.66;
-    fmax = 5135308.53;
-    //finto
-    //fmin = 5101689.983547;
-    //fmax = 5101700.014884;
-    p.y = fmin + f * (fmax - fmin);
-    cout.precision(10);
-    //cerr << i << endl;
-    cout << i << " " << p.x << " " << p.y << " ";
-    cout << sl.get_elevation(p) << " " << endl;
-  }
-}
-
-void test_start_points(const GisBackend& gb)
-{
-  double x,y;
-  cout << "x y " << endl;
-  for (int i=0; i<100; i++)
-  {
-    gb.get_start_point(&x,&y);
-    cout.precision(10);
-    cout << x << " " << y << " " << endl;
-  }
-}
-
 void run_simulation(Slope& sl)
 {
-  double dtime = 0.01;
+  double dtime = settings::dtime;
   for (double t=0; t<settings::total_simulation_time; t+=dtime)
   {
     sl.update(dtime);
@@ -167,6 +89,7 @@ int main (int argc, char** argv)
   if (G_parser(argc, argv))
     exit(1);
 
+  //instantiate GrassBackend
   GrassBackend *gb;
   try {
     gb = new GrassBackend(ski_slope_opt->answer,
@@ -183,27 +106,15 @@ int main (int argc, char** argv)
     exit(EXIT_FAILURE);
   }
 
+  //open output file
   ofstream output;
-  output.open("/tmp/simulation.csv");
+  output.open(settings::output_file_path);
+
+  //instantiate Slope class
   Slope sl(*gb, output);
+
   run_simulation(sl);
-  //test_start_points(*gb);
-  //test_gb(sl);
-  //test_elevation(sl);
-  /*GrassBackend *pgb;
-  for (int i=0; i<112; i++)
-  {
-    cout << i << endl;
-    pgb = new GrassBackend(ski_slope_opt->answer,
-                  right_edge_opt->answer,
-                  left_edge_opt->answer,
-                  dtm_opt->answer,
-                  slope_opt->answer,
-                  aspect_opt->answer);
-    delete pgb;
-    for (int j=0; j<10000; j+=2)
-      j-=1;
-      }*/
+
   output.close();
   return 0;
 }
