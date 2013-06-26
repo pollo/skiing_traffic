@@ -214,7 +214,7 @@ void Skier::choose_waypoint(double dtime)
   {
     //narrow the acceptable angle
     //alfa *= (1-frac);
-    alfa *= velocity.norm() / settings::vel_max;
+    alfa *= velocity.norm() / settings::vel_high;
 
     #ifdef DEBUG
     settings::waypoints() << position.x + line_midle.x << " " << position.y + line_midle.y << " " << endl;
